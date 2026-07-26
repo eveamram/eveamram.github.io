@@ -9,71 +9,65 @@ const getTodayString = (offsetDays = 0) => {
 export const INITIAL_GYM_SPLITS: GymSplitDay[] = [
   {
     day: 'Monday',
-    focusTitle: 'Push — Chest, Shoulders & Triceps',
+    focusTitle: 'Morning & Evening Activity Split',
     exercises: [
-      { id: 'ex-m1', name: 'Incline Dumbbell Press', setsReps: '4 sets x 8-10 reps', completedDates: [] },
-      { id: 'ex-m2', name: 'Overhead Shoulder Press', setsReps: '3 sets x 10 reps', completedDates: [] },
-      { id: 'ex-m3', name: 'Cable Chest Flyes', setsReps: '3 sets x 12 reps', completedDates: [] },
-      { id: 'ex-m4', name: 'Tricep Rope Pushdowns', setsReps: '4 sets x 12-15 reps', completedDates: [] },
-      { id: 'ex-m5', name: 'Lateral Raises', setsReps: '4 sets x 15 reps', completedDates: [] }
+      { id: 'ex-m1', name: 'Abs & Core Workout', setsReps: 'Morning (8:00 AM)', completedDates: [] },
+      { id: 'ex-m2', name: 'Outdoor Run', setsReps: 'Afternoon (5:30 PM)', completedDates: [] },
+      { id: 'ex-m3', name: 'Indoor Biking Session', setsReps: 'Evening (7:00 PM)', completedDates: [] }
     ]
   },
   {
     day: 'Tuesday',
-    focusTitle: 'Pull — Back & Biceps',
+    focusTitle: 'Daily Fitness & Movement',
     exercises: [
-      { id: 'ex-t1', name: 'Lat Pulldowns', setsReps: '4 sets x 10 reps', completedDates: [] },
-      { id: 'ex-t2', name: 'Seated Cable Rows', setsReps: '3 sets x 10-12 reps', completedDates: [] },
-      { id: 'ex-t3', name: 'Face Pulls', setsReps: '4 sets x 15 reps', completedDates: [] },
-      { id: 'ex-t4', name: 'Incline Dumbbell Curls', setsReps: '3 sets x 12 reps', completedDates: [] },
-      { id: 'ex-t5', name: 'Hammer Curls', setsReps: '3 sets x 12 reps', completedDates: [] }
+      { id: 'ex-t1', name: 'Indoor Biking Session', setsReps: 'Morning (7:30 AM)', completedDates: [] },
+      { id: 'ex-t2', name: 'Abs & Core Circuit', setsReps: 'Afternoon (1:00 PM)', completedDates: [] },
+      { id: 'ex-t3', name: 'Sunset Run', setsReps: 'Evening (6:30 PM)', completedDates: [] }
     ]
   },
   {
     day: 'Wednesday',
-    focusTitle: 'Core & Active Recovery Walk',
+    focusTitle: 'Midweek Core & Cardio',
     exercises: [
-      { id: 'ex-w1', name: 'Treadmill Incline Walk', setsReps: '30 mins @ 12 incline / 3mph', completedDates: [] },
-      { id: 'ex-w2', name: 'Hanging Leg Raises', setsReps: '3 sets x 15 reps', completedDates: [] },
-      { id: 'ex-w3', name: 'Plank Hold', setsReps: '3 sets x 60 sec', completedDates: [] }
+      { id: 'ex-w1', name: 'Abs & Planks', setsReps: 'Morning (8:00 AM)', completedDates: [] },
+      { id: 'ex-w2', name: 'Biking Intervals', setsReps: 'Afternoon (4:00 PM)', completedDates: [] },
+      { id: 'ex-w3', name: 'Evening Run', setsReps: 'Evening (7:00 PM)', completedDates: [] }
     ]
   },
   {
     day: 'Thursday',
-    focusTitle: 'Legs & Lower Body',
+    focusTitle: 'Endurance & Core Split',
     exercises: [
-      { id: 'ex-th1', name: 'Barbell Back Squats / Leg Press', setsReps: '4 sets x 8-10 reps', completedDates: [] },
-      { id: 'ex-th2', name: 'Romanian Deadlifts', setsReps: '3 sets x 10 reps', completedDates: [] },
-      { id: 'ex-th3', name: 'Walking Lunges', setsReps: '3 sets x 12 per leg', completedDates: [] },
-      { id: 'ex-th4', name: 'Standing Calf Raises', setsReps: '4 sets x 15 reps', completedDates: [] }
+      { id: 'ex-th1', name: 'Morning Run', setsReps: 'Morning (7:00 AM)', completedDates: [] },
+      { id: 'ex-th2', name: 'Abs & Core Session', setsReps: 'Afternoon (12:30 PM)', completedDates: [] },
+      { id: 'ex-th3', name: 'Stationary Biking', setsReps: 'Evening (6:00 PM)', completedDates: [] }
     ]
   },
   {
     day: 'Friday',
-    focusTitle: 'Upper Body Pump & Conditioning',
+    focusTitle: 'Cardio Boost & Abs',
     exercises: [
-      { id: 'ex-f1', name: 'Dumbbell Bench Press', setsReps: '4 sets x 10 reps', completedDates: [] },
-      { id: 'ex-f2', name: 'Single Arm Dumbbell Rows', setsReps: '3 sets x 10 reps', completedDates: [] },
-      { id: 'ex-f3', name: 'Arnold Press', setsReps: '3 sets x 12 reps', completedDates: [] },
-      { id: 'ex-f4', name: 'EZ-Bar Bicep Curls', setsReps: '3 sets x 12 reps', completedDates: [] }
+      { id: 'ex-f1', name: 'Biking Sprint Session', setsReps: 'Morning (8:00 AM)', completedDates: [] },
+      { id: 'ex-f2', name: 'Abs Workout', setsReps: 'Afternoon (2:00 PM)', completedDates: [] },
+      { id: 'ex-f3', name: '5K Run', setsReps: 'Evening (5:30 PM)', completedDates: [] }
     ]
   },
   {
     day: 'Saturday',
-    focusTitle: 'Full Body Conditioning & Mobility',
+    focusTitle: 'Weekend Cardio & Core',
     exercises: [
-      { id: 'ex-sa1', name: 'Kettlebell Swings', setsReps: '4 sets x 15 reps', completedDates: [] },
-      { id: 'ex-sa2', name: 'Goblet Squats', setsReps: '3 sets x 12 reps', completedDates: [] },
-      { id: 'ex-sa3', name: 'Pushups', setsReps: '3 sets to failure', completedDates: [] },
-      { id: 'ex-sa4', name: 'Foam Rolling & Mobility Stretch', setsReps: '15 mins', completedDates: [] }
+      { id: 'ex-sa1', name: 'Morning Biking', setsReps: 'Morning (9:00 AM)', completedDates: [] },
+      { id: 'ex-sa2', name: 'Abs Circuit', setsReps: 'Afternoon (1:00 PM)', completedDates: [] },
+      { id: 'ex-sa3', name: 'Trail Run', setsReps: 'Evening (5:00 PM)', completedDates: [] }
     ]
   },
   {
     day: 'Sunday',
-    focusTitle: 'Rest & Recovery Day',
+    focusTitle: 'Sunday Recovery & Cardio',
     exercises: [
-      { id: 'ex-su1', name: 'Gentle Walk & Hydration', setsReps: '20-30 mins', completedDates: [] },
-      { id: 'ex-su2', name: 'Full Body Stretch Routine', setsReps: '15 mins', completedDates: [] }
+      { id: 'ex-su1', name: 'Light Outdoor Run', setsReps: 'Morning (9:30 AM)', completedDates: [] },
+      { id: 'ex-su2', name: 'Abs & Stretch', setsReps: 'Afternoon (3:00 PM)', completedDates: [] },
+      { id: 'ex-su3', name: 'Evening Biking', setsReps: 'Evening (6:30 PM)', completedDates: [] }
     ]
   }
 ];

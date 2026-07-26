@@ -15,7 +15,8 @@ import {
   GymSplitDay,
   ExerciseItem,
   MoodType,
-  ViewMode
+  ViewMode,
+  UserProfile
 } from '../types';
 import { INITIAL_TASKS, INITIAL_HABITS, INITIAL_REMINDERS, INITIAL_GOALS, INITIAL_ROUTINES, INITIAL_GYM_SPLITS } from '../data/initialData';
 import { INITIAL_QUOTES } from '../data/quotes';
@@ -23,6 +24,10 @@ import { INITIAL_QUOTES } from '../data/quotes';
 interface StoreState {
   userName: string;
   setUserName: (name: string) => void;
+  profiles: UserProfile[];
+  currentProfile: UserProfile;
+  switchProfile: (profileId: string) => void;
+  createProfile: (name: string, avatarEmoji: string, color: string) => void;
   theme: AppTheme;
   toggleTheme: () => void;
   activeTab: ActiveTab;
@@ -90,9 +95,32 @@ const StoreContext = createContext<StoreState | undefined>(undefined);
 
 const STORAGE_PREFIX = 'aura_dashboard_v1_';
 
-function getInitialStorage<T>(key: string, fallback: T): T {
+const DEFAULT_PROFILES: UserProfile[] = [
+  { id: 'p_eve', name: 'Eve', avatarEmoji: '✨', color: '#007AFF', createdAt: '2026-07-26' },
+  { id: 'p_alex', name: 'Alex', avatarEmoji: '🌿', color: '#34C759', createdAt: '2026-07-26' }
+];
+
+function getInitialProfiles(): UserProfile[] {
   try {
-    const item = localStorage.getItem(STORAGE_PREFIX + key);
+    const item = localStorage.getItem(STORAGE_PREFIX + 'profiles_list');
+    return item ? JSON.parse(item) : DEFAULT_PROFILES;
+  } catch {
+    return DEFAULT_PROFILES;
+  }
+}
+
+function getInitialActiveProfileId(): string {
+  try {
+    const item = localStorage.getItem(STORAGE_PREFIX + 'active_profile_id');
+    return item ? JSON.parse(item) : 'p_eve';
+  } catch {
+    return 'p_eve';
+  }
+}
+
+function getProfileStorage<T>(profileId: string, key: string, fallback: T): T {
+  try {
+    const item = localStorage.getItem(`${STORAGE_PREFIX}${profileId}_${key}`);
     return item ? JSON.parse(item) : fallback;
   } catch {
     return fallback;
@@ -100,65 +128,92 @@ function getInitialStorage<T>(key: string, fallback: T): T {
 }
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userName, setUserNameState] = useState<string>(() => getInitialStorage('userName', 'Eve'));
-  const [theme, setThemeState] = useState<AppTheme>(() => getInitialStorage('theme', 'light'));
-  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
-  const [viewMode, setViewModeState] = useState<ViewMode>(() => getInitialStorage('viewMode', 'phone'));
-  const [isDeviceFrame, setIsDeviceFrame] = useState<boolean>(() => getInitialStorage('deviceFrame', true));
+  const [profiles, setProfiles] = useState<UserProfile[]>(getInitialProfiles);
+  const [activeProfileId, setActiveProfileId] = useState<string>(getInitialActiveProfileId);
 
-  const [goals, setGoals] = useState<GoalItem[]>(() => getInitialStorage('goals', INITIAL_GOALS));
-  const [todaysMainGoalId, setTodaysMainGoalId] = useState<string>(() => getInitialStorage('todaysGoal', INITIAL_GOALS[0]?.id || 'g1'));
+  const currentProfile = profiles.find(p => p.id === activeProfileId) || profiles[0] || DEFAULT_PROFILES[0];
+  const [userName, setUserNameState] = useState<string>(currentProfile.name);
+
+  const [theme, setThemeState] = useState<AppTheme>(() => getProfileStorage(activeProfileId, 'theme', 'light'));
+  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => getProfileStorage(activeProfileId, 'viewMode', 'phone'));
+  const [isDeviceFrame, setIsDeviceFrame] = useState<boolean>(() => getProfileStorage(activeProfileId, 'deviceFrame', true));
+
+  const [goals, setGoals] = useState<GoalItem[]>(() => getProfileStorage(activeProfileId, 'goals', INITIAL_GOALS));
+  const [todaysMainGoalId, setTodaysMainGoalId] = useState<string>(() => getProfileStorage(activeProfileId, 'todaysGoal', INITIAL_GOALS[0]?.id || 'g1'));
   
-  const [tasks, setTasks] = useState<TaskItem[]>(() => getInitialStorage('tasks', INITIAL_TASKS));
-  const [habits, setHabits] = useState<HabitItem[]>(() => getInitialStorage('habits', INITIAL_HABITS));
-  const [routines, setRoutines] = useState<RoutineTask[]>(() => getInitialStorage('routines', INITIAL_ROUTINES));
-  const [reminders, setReminders] = useState<ReminderItem[]>(() => getInitialStorage('reminders', INITIAL_REMINDERS));
-  const [gymSplits, setGymSplits] = useState<GymSplitDay[]>(() => getInitialStorage('gymSplits', INITIAL_GYM_SPLITS));
+  const [tasks, setTasks] = useState<TaskItem[]>(() => getProfileStorage(activeProfileId, 'tasks', INITIAL_TASKS));
+  const [habits, setHabits] = useState<HabitItem[]>(() => getProfileStorage(activeProfileId, 'habits', INITIAL_HABITS));
+  const [routines, setRoutines] = useState<RoutineTask[]>(() => getProfileStorage(activeProfileId, 'routines', INITIAL_ROUTINES));
+  const [reminders, setReminders] = useState<ReminderItem[]>(() => getProfileStorage(activeProfileId, 'reminders', INITIAL_REMINDERS));
+  const [gymSplits, setGymSplits] = useState<GymSplitDay[]>(() => getProfileStorage(activeProfileId, 'gymSplits', INITIAL_GYM_SPLITS));
   
-  const [waterGlassesToday, setWaterGlassesToday] = useState<number>(() => getInitialStorage('waterGlasses', 5));
-  const [todayMood, setTodayMoodState] = useState<MoodType | null>(() => getInitialStorage('todayMood', 'Energized ⚡'));
+  const [waterGlassesToday, setWaterGlassesToday] = useState<number>(() => getProfileStorage(activeProfileId, 'waterGlasses', 5));
+  const [todayMood, setTodayMoodState] = useState<MoodType | null>(() => getProfileStorage(activeProfileId, 'todayMood', 'Energized ⚡'));
   
   const [selectedQuoteCategory, setSelectedQuoteCategory] = useState<QuoteCategory>(() => 
-    getInitialStorage('quoteCategory', 'Stoicism')
+    getProfileStorage(activeProfileId, 'quoteCategory', 'Stoicism')
   );
 
   const [notifications, setNotifications] = useState<UserNotification[]>([
     {
       id: 'n1',
-      title: 'Good Morning!',
-      body: 'Ready to start your day with calm focus?',
-      date: 'Today, 8:00 AM',
+      title: `Welcome ${currentProfile.name}!`,
+      body: 'Your personal routines and fitness splits are loaded.',
+      date: 'Just Now',
       read: false,
       type: 'assistant'
-    },
-    {
-      id: 'n2',
-      title: 'Weekend Reset Reminder',
-      body: 'Saturday routines are active for your apartment reset.',
-      date: 'Today, 9:30 AM',
-      read: false,
-      type: 'reminder'
     }
   ]);
 
-  // Sync to local storage
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'userName', JSON.stringify(userName)); }, [userName]);
+  // Sync state to local storage for current profile
+  useEffect(() => {
+    localStorage.setItem(STORAGE_PREFIX + 'profiles_list', JSON.stringify(profiles));
+  }, [profiles]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_PREFIX + 'active_profile_id', JSON.stringify(activeProfileId));
+  }, [activeProfileId]);
+
   useEffect(() => { 
-    localStorage.setItem(STORAGE_PREFIX + 'theme', JSON.stringify(theme)); 
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_theme`, JSON.stringify(theme)); 
     document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'deviceFrame', JSON.stringify(isDeviceFrame)); }, [isDeviceFrame]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'viewMode', JSON.stringify(viewMode)); }, [viewMode]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'goals', JSON.stringify(goals)); }, [goals]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'todaysGoal', JSON.stringify(todaysMainGoalId)); }, [todaysMainGoalId]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'tasks', JSON.stringify(tasks)); }, [tasks]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'habits', JSON.stringify(habits)); }, [habits]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'routines', JSON.stringify(routines)); }, [routines]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'reminders', JSON.stringify(reminders)); }, [reminders]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'gymSplits', JSON.stringify(gymSplits)); }, [gymSplits]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'waterGlasses', JSON.stringify(waterGlassesToday)); }, [waterGlassesToday]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'todayMood', JSON.stringify(todayMood)); }, [todayMood]);
-  useEffect(() => { localStorage.setItem(STORAGE_PREFIX + 'quoteCategory', JSON.stringify(selectedQuoteCategory)); }, [selectedQuoteCategory]);
+  }, [theme, activeProfileId]);
+
+  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_tasks`, JSON.stringify(tasks)); }, [tasks, activeProfileId]);
+  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_habits`, JSON.stringify(habits)); }, [habits, activeProfileId]);
+  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_routines`, JSON.stringify(routines)); }, [routines, activeProfileId]);
+  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_reminders`, JSON.stringify(reminders)); }, [reminders, activeProfileId]);
+  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymSplits`, JSON.stringify(gymSplits)); }, [gymSplits, activeProfileId]);
+
+  const switchProfile = (profileId: string) => {
+    const target = profiles.find(p => p.id === profileId);
+    if (!target) return;
+
+    setActiveProfileId(profileId);
+    setUserNameState(target.name);
+
+    // Load data for switched profile
+    setTasks(getProfileStorage(profileId, 'tasks', INITIAL_TASKS));
+    setHabits(getProfileStorage(profileId, 'habits', INITIAL_HABITS));
+    setRoutines(getProfileStorage(profileId, 'routines', INITIAL_ROUTINES));
+    setReminders(getProfileStorage(profileId, 'reminders', INITIAL_REMINDERS));
+    setGymSplits(getProfileStorage(profileId, 'gymSplits', INITIAL_GYM_SPLITS));
+    setThemeState(getProfileStorage(profileId, 'theme', 'light'));
+  };
+
+  const createProfile = (name: string, avatarEmoji: string, color: string) => {
+    const newProfile: UserProfile = {
+      id: `p_${Date.now()}`,
+      name,
+      avatarEmoji,
+      color,
+      createdAt: new Date().toISOString()
+    };
+
+    setProfiles(prev => [...prev, newProfile]);
+    switchProfile(newProfile.id);
+  };
 
   const triggerConfetti = () => {
     try {
@@ -405,6 +460,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <StoreContext.Provider value={{
       userName,
       setUserName,
+      profiles,
+      currentProfile,
+      switchProfile,
+      createProfile,
       theme,
       toggleTheme,
       activeTab,

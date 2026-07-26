@@ -12,10 +12,12 @@ import { HabitsView } from './components/HabitsView';
 import { RemindersView } from './components/RemindersView';
 import { CalendarView } from './components/CalendarView';
 import { NotificationsModal } from './components/NotificationsModal';
+import { AuthModal } from './components/AuthModal';
 
 const AppContent: React.FC = () => {
   const { activeTab } = useStore();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -68,7 +70,10 @@ const AppContent: React.FC = () => {
 
   return (
     <DeviceFrame>
-      <Header onOpenNotifications={() => setIsNotificationsOpen(true)} />
+      <Header 
+        onOpenNotifications={() => setIsNotificationsOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
+      />
       
       <main style={{ flex: 1, paddingBottom: '30px' }}>
         {renderActiveView()}
@@ -79,6 +84,11 @@ const AppContent: React.FC = () => {
       <NotificationsModal
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
+      />
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
       />
     </DeviceFrame>
   );

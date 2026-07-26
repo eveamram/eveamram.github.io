@@ -99,6 +99,14 @@ export interface HydrationLog {
   glasses: number;
 }
 
+export interface UserProfile {
+  id: string;
+  name: string;
+  avatarEmoji: string;
+  color: string;
+  createdAt: string;
+}
+
 export type ViewMode = 'phone' | 'computer';
 export type AppTheme = 'light' | 'dark';
 export type ActiveTab = 'home' | 'tasks' | 'habits' | 'reminders' | 'calendar';

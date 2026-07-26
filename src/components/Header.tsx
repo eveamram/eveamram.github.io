@@ -4,14 +4,16 @@ import { Sun, Moon, Bell, Smartphone, Monitor, UserCheck, RefreshCw } from 'luci
 
 interface HeaderProps {
   onOpenNotifications: () => void;
+  onOpenAuth: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenNotifications }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth }) => {
   const { 
     userName, 
     setUserName, 
     theme, 
     toggleTheme, 
+    currentProfile,
     notifications,
     resetAllData 
   } = useStore();
@@ -50,6 +52,29 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications }) => {
         </span>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* User Profile / Switch Account Button */}
+          <button
+            onClick={onOpenAuth}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: 'var(--radius-full)',
+              background: 'var(--bg-tertiary)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            title="Switch User Account Profile"
+          >
+            <span>{currentProfile?.avatarEmoji || '✨'}</span>
+            <span>{currentProfile?.name || userName}</span>
+          </button>
+
           {/* Theme Toggle */}
           <button 
             className="icon-btn" 
