@@ -94,12 +94,20 @@ interface StoreState {
 
 const StoreContext = createContext<StoreState | undefined>(undefined);
 
-const STORAGE_PREFIX = 'aura_dashboard_v3_';
+const STORAGE_PREFIX = 'aura_dashboard_v5_';
 
 const DEFAULT_PROFILES: UserProfile[] = [
   { id: 'p_eve', name: 'Eve', avatarEmoji: '✨', color: '#007AFF', createdAt: '2026-07-26' },
   { id: 'p_alex', name: 'Alex', avatarEmoji: '🌿', color: '#34C759', createdAt: '2026-07-26' }
 ];
+
+function sanitizeGymSplits(splits: GymSplitDay[]): GymSplitDay[] {
+  if (!splits || !Array.isArray(splits)) return INITIAL_GYM_SPLITS;
+  return splits.map(s => ({
+    ...s,
+    exercises: []
+  }));
+}
 
 function getInitialProfiles(): UserProfile[] {
   try {
@@ -147,7 +155,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [habits, setHabits] = useState<HabitItem[]>(() => getProfileStorage(activeProfileId, 'habits', INITIAL_HABITS));
   const [routines, setRoutines] = useState<RoutineTask[]>(() => getProfileStorage(activeProfileId, 'routines', INITIAL_ROUTINES));
   const [reminders, setReminders] = useState<ReminderItem[]>(() => getProfileStorage(activeProfileId, 'reminders', INITIAL_REMINDERS));
-  const [gymSplits, setGymSplits] = useState<GymSplitDay[]>(() => getProfileStorage(activeProfileId, 'gymSplits', INITIAL_GYM_SPLITS));
+  const [gymSplits, setGymSplits] = useState<GymSplitDay[]>(() => sanitizeGymSplits(getProfileStorage(activeProfileId, 'gymSplits', INITIAL_GYM_SPLITS)));
   
   const [waterGlassesToday, setWaterGlassesToday] = useState<number>(() => getProfileStorage(activeProfileId, 'waterGlasses', 5));
   const [todayMood, setTodayMoodState] = useState<MoodType | null>(() => getProfileStorage(activeProfileId, 'todayMood', 'Energized ⚡'));

@@ -7,13 +7,13 @@ const getTodayString = (offsetDays = 0) => {
 };
 
 export const INITIAL_GYM_SPLITS: GymSplitDay[] = [
-  { day: 'Monday', focusTitle: 'Push', exercises: [] },
-  { day: 'Tuesday', focusTitle: 'Pull', exercises: [] },
-  { day: 'Wednesday', focusTitle: 'Legs', exercises: [] },
-  { day: 'Thursday', focusTitle: 'Abs & Core', exercises: [] },
-  { day: 'Friday', focusTitle: 'Biking', exercises: [] },
-  { day: 'Saturday', focusTitle: 'Running', exercises: [] },
-  { day: 'Sunday', focusTitle: 'Rest', exercises: [] }
+  { day: 'Monday', focusTitle: 'Rest & Recovery Day', exercises: [] },
+  { day: 'Tuesday', focusTitle: 'Rest & Recovery Day', exercises: [] },
+  { day: 'Wednesday', focusTitle: 'Rest & Recovery Day', exercises: [] },
+  { day: 'Thursday', focusTitle: 'Rest & Recovery Day', exercises: [] },
+  { day: 'Friday', focusTitle: 'Rest & Recovery Day', exercises: [] },
+  { day: 'Saturday', focusTitle: 'Rest & Recovery Day', exercises: [] },
+  { day: 'Sunday', focusTitle: 'Rest & Recovery Day', exercises: [] }
 ];
 
 export const INITIAL_ROUTINES: RoutineTask[] = [
