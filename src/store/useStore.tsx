@@ -94,7 +94,7 @@ interface StoreState {
 
 const StoreContext = createContext<StoreState | undefined>(undefined);
 
-const STORAGE_PREFIX = 'aura_dashboard_v5_';
+const STORAGE_PREFIX = 'aura_dashboard_v6_';
 
 const DEFAULT_PROFILES: UserProfile[] = [
   { id: 'p_eve', name: 'Eve', avatarEmoji: '✨', color: '#007AFF', createdAt: '2026-07-26' },

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../store/useStore';
 import { X, Bell, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -21,27 +22,50 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, 
     }
   };
 
-  return (
-    <div className="modal-backdrop" onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+  const modalContent = (
+    <div 
+      onClick={onClose} 
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: 'rgba(0, 0, 0, 0.45)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        zIndex: 999999,
+        padding: '20px',
+        boxSizing: 'border-box'
+      }}
+    >
       <div 
+        className="animate-pop-in"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--bg-card)',
-          borderRadius: 'var(--radius-lg)',
+          borderRadius: '28px',
           padding: '24px',
           width: '100%',
           maxWidth: '440px',
           boxShadow: 'var(--shadow-xl)',
           border: '1px solid var(--border-color)',
           maxHeight: '80vh',
-          overflowY: 'auto'
+          overflowY: 'auto',
+          margin: 'auto',
+          alignSelf: 'center'
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Daily Notifications
           </h2>
-          <button className="icon-btn" onClick={onClose}>
+          <button className="icon-btn" onClick={onClose} style={{ cursor: 'pointer' }}>
             <X size={18} />
           </button>
         </div>
@@ -93,4 +117,6 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, 
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

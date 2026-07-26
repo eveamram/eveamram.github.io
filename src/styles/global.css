@@ -214,10 +214,10 @@ body {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 0;
+  padding: 20px;
   animation: fadeIn 0.2s ease;
 }
 
@@ -225,8 +225,7 @@ body {
   background: var(--bg-modal);
   width: 100%;
   max-width: var(--container-max-width);
-  border-top-left-radius: var(--radius-xl);
-  border-top-right-radius: var(--radius-xl);
+  border-radius: var(--radius-xl);
   padding: 24px;
   box-shadow: var(--shadow-lg);
   animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -271,7 +270,6 @@ body {
   left: 0;
   right: 0;
   width: 100%;
-  max-width: 100%;
   background: var(--bg-glass);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -279,10 +277,11 @@ body {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 10px 16px 14px 16px;
+  padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px)) 12px;
   z-index: 950;
   margin-top: auto;
   pointer-events: auto;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .nav-item {
@@ -290,28 +289,31 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   background: none;
   border: none;
   color: var(--text-tertiary);
   font-size: 0.72rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 6px 4px;
-  border-radius: var(--radius-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
   flex: 1;
+  max-width: 90px;
   pointer-events: auto;
   user-select: none;
+  min-height: 48px;
 }
 
 .nav-item.active {
   color: var(--accent-primary);
-  font-weight: 700;
+  font-weight: 800;
+  background: var(--accent-soft);
 }
 
 .nav-item:active {
-  transform: scale(0.92);
+  transform: scale(0.94);
 }
 
 /* Responsive Auto-Adapter for Mobile Phone vs Computer Screens */
@@ -329,6 +331,16 @@ body {
     border-radius: 0 !important;
     border: none !important;
     box-shadow: none !important;
+  }
+
+  .bottom-nav {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 9990 !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
   }
 
   .ios-status-bar-mock {

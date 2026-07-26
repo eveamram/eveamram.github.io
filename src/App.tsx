@@ -4,7 +4,7 @@ import { DeviceFrame } from './components/DeviceFrame';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { SmartAssistant } from './components/SmartAssistant';
-import { QuoteCard } from './components/QuoteCard';
+import { ClassesScheduleCard } from './components/ClassesScheduleCard';
 import { DailyRoutineCard } from './components/DailyRoutineCard';
 import { GymWorkoutCard } from './components/GymWorkoutCard';
 import { TasksView } from './components/TasksView';
@@ -31,7 +31,7 @@ const AppContent: React.FC = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <DailyRoutineCard />
-                <QuoteCard />
+                <ClassesScheduleCard />
               </div>
             </div>
           </div>

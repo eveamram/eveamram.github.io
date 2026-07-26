@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../store/useStore';
 import { UserProfile } from '../types';
-import { User, Plus, Check, ShieldCheck, X } from 'lucide-react';
+import { Plus, Check, ShieldCheck, X } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -36,11 +37,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-sheet animate-slide-up" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
-        <div className="modal-handle" />
-        
+  const modalContent = (
+    <div 
+      className="modal-backdrop" 
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: 'rgba(0, 0, 0, 0.45)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 999999,
+        padding: '20px'
+      }}
+    >
+      <div 
+        className="modal-sheet animate-pop-in" 
+        onClick={(e) => e.stopPropagation()} 
+        style={{ 
+          background: 'var(--bg-card)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '24px',
+          width: '100%',
+          maxWidth: '440px',
+          boxShadow: 'var(--shadow-xl)',
+          border: '1px solid var(--border-color)',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          margin: 'auto'
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -215,4 +249,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

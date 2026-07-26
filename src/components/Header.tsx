@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Sun, Moon, Bell, Smartphone, Monitor, UserCheck, RefreshCw } from 'lucide-react';
+import { Sun, Moon, Bell, Sparkles, UserCheck, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
   onOpenNotifications: () => void;
@@ -31,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth 
   };
 
   const formattedDate = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
+    weekday: 'short',
     month: 'short',
     day: 'numeric'
   });
@@ -45,12 +45,34 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth 
   };
 
   return (
-    <header className="header-container" style={{ padding: '24px 24px 12px 24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-          {formattedDate}
-        </span>
-        
+    <header className="header-container" style={{ padding: '20px 24px 12px 24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        {/* Brand Logo & Date */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '38px',
+            height: '38px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-purple) 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 14px rgba(0, 122, 255, 0.25)',
+            color: '#FFFFFF'
+          }}>
+            <Sparkles size={20} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '-0.5px', color: 'var(--text-primary)', lineHeight: 1 }}>
+              AURA
+            </span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.6px', textTransform: 'uppercase', marginTop: '3px' }}>
+              {formattedDate}
+            </span>
+          </div>
+        </div>
+
+        {/* Header Right Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* User Profile / Switch Account Button */}
           <button
@@ -123,6 +145,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth 
         </div>
       </div>
 
+      {/* Greeting Banner */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
         {isEditingName ? (
           <form onSubmit={handleNameSubmit} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -157,3 +180,5 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth 
     </header>
   );
 };
+
+export default Header;
