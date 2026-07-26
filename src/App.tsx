@@ -14,42 +14,35 @@ import { CalendarView } from './components/CalendarView';
 import { NotificationsModal } from './components/NotificationsModal';
 
 const AppContent: React.FC = () => {
-  const { activeTab, viewMode, isDeviceFrame } = useStore();
+  const { activeTab } = useStore();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const renderActiveView = () => {
-    const isComputer = viewMode === 'computer';
-
     switch (activeTab) {
       case 'home':
         return (
-          <div style={{ padding: '0 20px' }}>
-            {isComputer ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'start' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <SmartAssistant />
-                  <GymWorkoutCard />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <DailyRoutineCard />
-                  <QuoteCard />
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px', alignItems: 'start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <SmartAssistant />
                 <GymWorkoutCard />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <DailyRoutineCard />
                 <QuoteCard />
               </div>
-            )}
+            </div>
           </div>
         );
       case 'tasks':
-        return <TasksView />;
+        return (
+          <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+            <TasksView />
+          </div>
+        );
       case 'habits':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
             <div style={{ padding: '0 20px' }}>
               <GymWorkoutCard />
             </div>
@@ -57,19 +50,27 @@ const AppContent: React.FC = () => {
           </div>
         );
       case 'reminders':
-        return <RemindersView />;
+        return (
+          <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+            <RemindersView />
+          </div>
+        );
       case 'calendar':
-        return <CalendarView />;
+        return (
+          <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+            <CalendarView />
+          </div>
+        );
       default:
         return null;
     }
   };
 
   return (
-    <DeviceFrame enabled={isDeviceFrame}>
+    <DeviceFrame>
       <Header onOpenNotifications={() => setIsNotificationsOpen(true)} />
       
-      <main style={{ flex: 1, paddingBottom: '20px' }}>
+      <main style={{ flex: 1, paddingBottom: '30px' }}>
         {renderActiveView()}
       </main>
 

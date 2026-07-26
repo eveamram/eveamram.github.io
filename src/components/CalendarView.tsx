@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { ChevronLeft, ChevronRight, CheckSquare, Bell, Sparkles, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckSquare, Bell, Sparkles, Plus, Calendar as CalendarIcon, Clock, Check } from 'lucide-react';
 import { DayOfWeek, TaskCategory, TaskPriority } from '../types';
 
 export const CalendarView: React.FC = () => {
-  const { tasks, reminders, routines, addTask } = useStore();
+  const { tasks, reminders, routines, addTask, toggleTask } = useStore();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -15,7 +15,7 @@ export const CalendarView: React.FC = () => {
   const [category, setCategory] = useState<TaskCategory>('Personal');
   const [priority, setPriority] = useState<TaskPriority>('medium');
 
-  const daysOfWeek: DayOfWeek[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const daysOfWeekFull: DayOfWeek[] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
@@ -30,6 +30,11 @@ export const CalendarView: React.FC = () => {
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+  const goToToday = () => {
+    const now = new Date();
+    setCurrentDate(now);
+    setSelectedDate(now.toISOString().split('T')[0]);
+  };
 
   const totalDays = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
@@ -46,11 +51,17 @@ export const CalendarView: React.FC = () => {
 
   // Get items for selected date
   const selDateObj = new Date(selectedDate + 'T00:00:00');
-  const selDayOfWeekName = daysOfWeek[selDateObj.getDay()];
+  const selDayOfWeekName = daysOfWeekFull[selDateObj.getDay()];
 
   const dayTasks = tasks.filter(t => t.dueDate === selectedDate);
   const dayReminders = reminders.filter(r => r.dueDate === selectedDate);
   const dayRoutines = routines.filter(r => r.day === selDayOfWeekName);
+
+  const formattedSelectedTitle = selDateObj.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  });
 
   const handleCreateTaskForDate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,74 +79,108 @@ export const CalendarView: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '0 20px' }}>
-      {/* Calendar Header Controls */}
-      <div className="aura-card" style={{ padding: '16px', marginBottom: '14px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            {monthNames[month]} {year}
-          </h2>
+    <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Calendar Header Card */}
+      <div className="aura-card" style={{ padding: '20px', marginBottom: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CalendarIcon size={20} color="var(--accent-primary)" />
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+                {monthNames[month]} {year}
+              </h2>
+            </div>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 500 }}>
+              Select a date to view or schedule events
+            </p>
+          </div>
           
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <button className="icon-btn" onClick={prevMonth} style={{ width: '32px', height: '32px' }}>
-              <ChevronLeft size={16} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button 
+              className="badge-pill" 
+              onClick={goToToday}
+              style={{ background: 'var(--accent-soft)', color: 'var(--accent-primary)', border: 'none', cursor: 'pointer', padding: '6px 12px', fontWeight: 700 }}
+            >
+              Today
             </button>
-            <button className="icon-btn" onClick={nextMonth} style={{ width: '32px', height: '32px' }}>
-              <ChevronRight size={16} />
+            <button className="icon-btn" onClick={prevMonth} style={{ width: '34px', height: '34px' }} title="Previous Month">
+              <ChevronLeft size={18} />
+            </button>
+            <button className="icon-btn" onClick={nextMonth} style={{ width: '34px', height: '34px' }} title="Next Month">
+              <ChevronRight size={18} />
             </button>
           </div>
         </div>
 
-        {/* Day Name Labels */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: '8px' }}>
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-            <span key={i} style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)' }}>
+        {/* Day Name Header Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: '10px' }}>
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
+            <span key={i} style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               {d}
             </span>
           ))}
         </div>
 
-        {/* Date Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+        {/* Calendar Days Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
           {calendarCells.map((cell, index) => {
             if (!cell) {
-              return <div key={`empty-${index}`} style={{ height: '38px' }} />;
+              return <div key={`empty-${index}`} style={{ height: '48px' }} />;
             }
 
             const isSelected = cell.dateStr === selectedDate;
             const isToday = cell.dateStr === new Date().toISOString().split('T')[0];
 
-            // Check if events exist for this date
-            const hasTask = tasks.some(t => t.dueDate === cell.dateStr);
-            const hasRem = reminders.some(r => r.dueDate === cell.dateStr);
+            // Check event indicators for this date
+            const taskCount = tasks.filter(t => t.dueDate === cell.dateStr).length;
+            const reminderCount = reminders.filter(r => r.dueDate === cell.dateStr).length;
+            const hasEvents = taskCount > 0 || reminderCount > 0;
 
             return (
               <button
                 key={cell.dateStr}
                 onClick={() => setSelectedDate(cell.dateStr)}
                 style={{
-                  height: '38px',
+                  height: '48px',
                   borderRadius: 'var(--radius-sm)',
-                  border: isToday ? '2px solid var(--accent-primary)' : '1px solid transparent',
-                  background: isSelected ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
+                  border: isToday ? '2px solid var(--accent-primary)' : isSelected ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                  background: isSelected 
+                    ? 'var(--accent-primary)' 
+                    : isToday 
+                    ? 'var(--accent-soft)' 
+                    : 'var(--bg-tertiary)',
                   color: isSelected ? '#FFFFFF' : 'var(--text-primary)',
-                  fontWeight: isSelected || isToday ? 700 : 500,
-                  fontSize: '0.85rem',
+                  fontWeight: isSelected || isToday ? 800 : 500,
+                  fontSize: '0.9rem',
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  position: 'relative'
+                  position: 'relative',
+                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: isSelected ? '0 4px 12px rgba(0, 122, 255, 0.3)' : 'none'
                 }}
               >
                 <span>{cell.dayNumber}</span>
-                <div style={{ display: 'flex', gap: '2px', position: 'absolute', bottom: '3px' }}>
-                  {hasRem && (
-                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: isSelected ? '#FFF' : 'var(--accent-warning)' }} />
+                
+                {/* Event Indicator Dots */}
+                <div style={{ display: 'flex', gap: '3px', position: 'absolute', bottom: '5px' }}>
+                  {reminderCount > 0 && (
+                    <span style={{
+                      width: '5px',
+                      height: '5px',
+                      borderRadius: '50%',
+                      backgroundColor: isSelected ? '#FFFFFF' : 'var(--accent-warning)'
+                    }} />
                   )}
-                  {hasTask && (
-                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: isSelected ? '#FFF' : 'var(--accent-success)' }} />
+                  {taskCount > 0 && (
+                    <span style={{
+                      width: '5px',
+                      height: '5px',
+                      borderRadius: '50%',
+                      backgroundColor: isSelected ? '#FFFFFF' : 'var(--accent-success)'
+                    }} />
                   )}
                 </div>
               </button>
@@ -144,78 +189,159 @@ export const CalendarView: React.FC = () => {
         </div>
       </div>
 
-      {/* Selected Day Agenda */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            Schedule for {selectedDate} ({selDayOfWeekName})
-          </h3>
+      {/* Selected Day Agenda Timeline */}
+      <div className="aura-card" style={{ padding: '20px', marginBottom: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Selected Agenda
+            </span>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '2px' }}>
+              {formattedSelectedTitle}
+            </h3>
+          </div>
+
           <button 
             onClick={() => setIsAddModalOpen(true)}
             className="btn-primary"
-            style={{ width: 'auto', padding: '6px 12px', fontSize: '0.8rem' }}
+            style={{ width: 'auto', padding: '8px 14px', fontSize: '0.82rem', gap: '6px' }}
           >
-            <Plus size={14} /> Add to Date
+            <Plus size={15} /> Add Task
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {/* Recurring Routines for this day */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Day Routines */}
           {dayRoutines.length > 0 && (
-            <div className="aura-card" style={{ marginBottom: 0, padding: '14px 16px' }}>
+            <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                 <Sparkles size={14} color="var(--accent-purple)" />
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
-                  {selDayOfWeekName} Recurring Routines ({dayRoutines.length})
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-purple)' }}>
+                  Recurring Day Routines
                 </span>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {dayRoutines.map(r => (
-                  <span key={r.id} className="badge-pill" style={{ background: 'var(--accent-purple-soft)', color: 'var(--accent-purple)' }}>
-                    {r.title}
-                  </span>
+                  <div 
+                    key={r.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 12px',
+                      borderRadius: 'var(--radius-full)',
+                      background: 'var(--accent-purple-soft)',
+                      color: 'var(--accent-purple)',
+                      fontSize: '0.8rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    <Clock size={12} />
+                    <span>{r.title} ({r.day})</span>
+                  </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Scheduled Tasks for this date */}
+          {/* Scheduled Tasks for Date */}
           {dayTasks.length > 0 && (
-            <div className="aura-card" style={{ marginBottom: 0, padding: '14px 16px' }}>
+            <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                 <CheckSquare size={14} color="var(--accent-primary)" />
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
-                  Scheduled Tasks ({dayTasks.length})
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-primary)' }}>
+                  Scheduled Tasks
                 </span>
               </div>
-              {dayTasks.map(t => (
-                <div key={t.id} style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', padding: '4px 0' }}>
-                  • {t.title} <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>({t.category})</span>
-                </div>
-              ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {dayTasks.map(t => (
+                  <div 
+                    key={t.id}
+                    onClick={() => toggleTask(t.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: 'var(--radius-md)',
+                      background: 'var(--bg-tertiary)',
+                      border: '1px solid var(--border-color)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className={`checkbox-custom ${t.completed ? 'checked' : ''}`}>
+                        {t.completed && <Check size={12} strokeWidth={3} />}
+                      </div>
+                      <span style={{
+                        fontSize: '0.88rem',
+                        fontWeight: 600,
+                        color: t.completed ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                        textDecoration: t.completed ? 'line-through' : 'none'
+                      }}>
+                        {t.title}
+                      </span>
+                    </div>
+
+                    <span className="badge-pill" style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                      {t.category}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Scheduled Reminders for this date */}
+          {/* Scheduled Reminders */}
           {dayReminders.length > 0 && (
-            <div className="aura-card" style={{ marginBottom: 0, padding: '14px 16px' }}>
+            <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                 <Bell size={14} color="var(--accent-warning)" />
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
-                  Reminders Due ({dayReminders.length})
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-warning)' }}>
+                  Due Reminders
                 </span>
               </div>
-              {dayReminders.map(r => (
-                <div key={r.id} style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', padding: '4px 0' }}>
-                  • {r.title} {r.amount && `(${r.amount})`}
-                </div>
-              ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {dayReminders.map(r => (
+                  <div 
+                    key={r.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: 'var(--radius-md)',
+                      background: 'var(--accent-warning-soft)',
+                      border: '1px solid rgba(255, 149, 0, 0.2)',
+                      color: 'var(--text-primary)'
+                    }}
+                  >
+                    <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+                      🔔 {r.title}
+                    </span>
+                    {r.amount && (
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-warning)' }}>
+                        {r.amount}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {dayRoutines.length === 0 && dayTasks.length === 0 && dayReminders.length === 0 && (
-            <div className="aura-card" style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
-              No specific events or reminders set for this day. Click "+ Add to Date" above to add one!
+            <div style={{
+              textAlign: 'center',
+              padding: '24px 16px',
+              color: 'var(--text-tertiary)',
+              fontSize: '0.85rem',
+              background: 'var(--bg-tertiary)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px dashed var(--border-color)'
+            }}>
+              No items scheduled for this date. Click "+ Add Task" to schedule something!
             </div>
           )}
         </div>
@@ -226,9 +352,9 @@ export const CalendarView: React.FC = () => {
         <div className="modal-backdrop" onClick={() => setIsAddModalOpen(false)}>
           <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="modal-handle" />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '4px' }}>Add Event / Task</h3>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '4px' }}>Add Event to Date</h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginBottom: '16px' }}>
-              Scheduled for {selectedDate} ({selDayOfWeekName})
+              Scheduled for {formattedSelectedTitle} ({selectedDate})
             </p>
 
             <form onSubmit={handleCreateTaskForDate}>
@@ -281,7 +407,7 @@ export const CalendarView: React.FC = () => {
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" style={{ flex: 1 }}>
-                  Add to Calendar
+                  Schedule Event
                 </button>
               </div>
             </form>
