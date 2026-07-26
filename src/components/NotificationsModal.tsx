@@ -22,12 +22,23 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, 
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-handle" />
-        
+    <div className="modal-backdrop" onClick={onClose} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--bg-card)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '24px',
+          width: '100%',
+          maxWidth: '440px',
+          boxShadow: 'var(--shadow-xl)',
+          border: '1px solid var(--border-color)',
+          maxHeight: '80vh',
+          overflowY: 'auto'
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Daily Notifications
           </h2>
           <button className="icon-btn" onClick={onClose}>
