@@ -48,13 +48,25 @@ export interface GoalItem {
 
 export type QuoteCategory = 
   | 'Discipline'
+  | 'Consistency'
   | 'Success'
-  | 'Happiness'
-  | 'Business'
-  | 'Fitness'
-  | 'Stoicism'
   | 'Confidence'
-  | 'Kindness';
+  | 'Happiness'
+  | 'Gratitude'
+  | 'Fitness'
+  | 'Health'
+  | 'Productivity'
+  | 'Focus'
+  | 'Growth'
+  | 'Leadership'
+  | 'Kindness'
+  | 'Resilience'
+  | 'Stoicism'
+  | 'Morning Motivation'
+  | 'Evening Reflection'
+  | 'New Beginnings'
+  | 'Mindfulness'
+  | 'Self Improvement';
 
 export interface QuoteItem {
   id: string;

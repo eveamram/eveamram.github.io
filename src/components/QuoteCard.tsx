@@ -7,14 +7,26 @@ export const QuoteCard: React.FC = () => {
   const { activeQuote, selectedQuoteCategory, setSelectedQuoteCategory } = useStore();
 
   const categories: QuoteCategory[] = [
-    'Stoicism',
     'Discipline',
+    'Consistency',
     'Success',
-    'Happiness',
-    'Business',
-    'Fitness',
     'Confidence',
-    'Kindness'
+    'Happiness',
+    'Gratitude',
+    'Fitness',
+    'Health',
+    'Productivity',
+    'Focus',
+    'Growth',
+    'Leadership',
+    'Kindness',
+    'Resilience',
+    'Stoicism',
+    'Morning Motivation',
+    'Evening Reflection',
+    'New Beginnings',
+    'Mindfulness',
+    'Self Improvement'
   ];
 
   return (

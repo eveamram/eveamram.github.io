@@ -7,69 +7,13 @@ const getTodayString = (offsetDays = 0) => {
 };
 
 export const INITIAL_GYM_SPLITS: GymSplitDay[] = [
-  {
-    day: 'Monday',
-    focusTitle: 'Morning & Evening Activity Split',
-    exercises: [
-      { id: 'ex-m1', name: 'Abs & Core Workout', setsReps: 'Morning (8:00 AM)', completedDates: [] },
-      { id: 'ex-m2', name: 'Outdoor Run', setsReps: 'Afternoon (5:30 PM)', completedDates: [] },
-      { id: 'ex-m3', name: 'Indoor Biking Session', setsReps: 'Evening (7:00 PM)', completedDates: [] }
-    ]
-  },
-  {
-    day: 'Tuesday',
-    focusTitle: 'Daily Fitness & Movement',
-    exercises: [
-      { id: 'ex-t1', name: 'Indoor Biking Session', setsReps: 'Morning (7:30 AM)', completedDates: [] },
-      { id: 'ex-t2', name: 'Abs & Core Circuit', setsReps: 'Afternoon (1:00 PM)', completedDates: [] },
-      { id: 'ex-t3', name: 'Sunset Run', setsReps: 'Evening (6:30 PM)', completedDates: [] }
-    ]
-  },
-  {
-    day: 'Wednesday',
-    focusTitle: 'Midweek Core & Cardio',
-    exercises: [
-      { id: 'ex-w1', name: 'Abs & Planks', setsReps: 'Morning (8:00 AM)', completedDates: [] },
-      { id: 'ex-w2', name: 'Biking Intervals', setsReps: 'Afternoon (4:00 PM)', completedDates: [] },
-      { id: 'ex-w3', name: 'Evening Run', setsReps: 'Evening (7:00 PM)', completedDates: [] }
-    ]
-  },
-  {
-    day: 'Thursday',
-    focusTitle: 'Endurance & Core Split',
-    exercises: [
-      { id: 'ex-th1', name: 'Morning Run', setsReps: 'Morning (7:00 AM)', completedDates: [] },
-      { id: 'ex-th2', name: 'Abs & Core Session', setsReps: 'Afternoon (12:30 PM)', completedDates: [] },
-      { id: 'ex-th3', name: 'Stationary Biking', setsReps: 'Evening (6:00 PM)', completedDates: [] }
-    ]
-  },
-  {
-    day: 'Friday',
-    focusTitle: 'Cardio Boost & Abs',
-    exercises: [
-      { id: 'ex-f1', name: 'Biking Sprint Session', setsReps: 'Morning (8:00 AM)', completedDates: [] },
-      { id: 'ex-f2', name: 'Abs Workout', setsReps: 'Afternoon (2:00 PM)', completedDates: [] },
-      { id: 'ex-f3', name: '5K Run', setsReps: 'Evening (5:30 PM)', completedDates: [] }
-    ]
-  },
-  {
-    day: 'Saturday',
-    focusTitle: 'Weekend Cardio & Core',
-    exercises: [
-      { id: 'ex-sa1', name: 'Morning Biking', setsReps: 'Morning (9:00 AM)', completedDates: [] },
-      { id: 'ex-sa2', name: 'Abs Circuit', setsReps: 'Afternoon (1:00 PM)', completedDates: [] },
-      { id: 'ex-sa3', name: 'Trail Run', setsReps: 'Evening (5:00 PM)', completedDates: [] }
-    ]
-  },
-  {
-    day: 'Sunday',
-    focusTitle: 'Sunday Recovery & Cardio',
-    exercises: [
-      { id: 'ex-su1', name: 'Light Outdoor Run', setsReps: 'Morning (9:30 AM)', completedDates: [] },
-      { id: 'ex-su2', name: 'Abs & Stretch', setsReps: 'Afternoon (3:00 PM)', completedDates: [] },
-      { id: 'ex-su3', name: 'Evening Biking', setsReps: 'Evening (6:30 PM)', completedDates: [] }
-    ]
-  }
+  { day: 'Monday', focusTitle: 'Abs & Biking', exercises: [] },
+  { day: 'Tuesday', focusTitle: 'Outdoor Run', exercises: [] },
+  { day: 'Wednesday', focusTitle: 'Core & Biking', exercises: [] },
+  { day: 'Thursday', focusTitle: 'Run & Abs', exercises: [] },
+  { day: 'Friday', focusTitle: 'Biking & Cardio', exercises: [] },
+  { day: 'Saturday', focusTitle: 'Abs & Trail Run', exercises: [] },
+  { day: 'Sunday', focusTitle: 'Rest & Recovery', exercises: [] }
 ];
 
 export const INITIAL_ROUTINES: RoutineTask[] = [
