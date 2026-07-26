@@ -18,6 +18,12 @@ export const GymWorkoutCard: React.FC = () => {
   const [isCustomInputOpen, setIsCustomInputOpen] = useState(false);
   const [customInputText, setCustomInputText] = useState('');
 
+  // Workout completion tracking state
+  const [completedDays, setCompletedDays] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem('aura_dashboard_completed_workouts_v1');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   const workoutCategories = [
     'Rest Day',
     'Recovery Day',
@@ -36,6 +42,18 @@ export const GymWorkoutCard: React.FC = () => {
 
   const currentSplit = gymSplits.find(s => s.day === selectedDay) || { day: selectedDay, focusTitle: 'Rest Day', exercises: [] };
   const currentWorkoutType = currentSplit.focusTitle || 'Rest Day';
+  const isCompleted = !!completedDays[selectedDay];
+
+  const toggleWorkoutCompleted = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const nextState = !isCompleted;
+    const updated = { ...completedDays, [selectedDay]: nextState };
+    setCompletedDays(updated);
+    localStorage.setItem('aura_dashboard_completed_workouts_v1', JSON.stringify(updated));
+    if (nextState) {
+      triggerConfetti();
+    }
+  };
 
   const handleSelectCategory = (category: string) => {
     updateGymSplitFocusTitle(selectedDay, category);
@@ -108,6 +126,7 @@ export const GymWorkoutCard: React.FC = () => {
         {daysOfWeek.map((day) => {
           const isSelected = selectedDay === day;
           const isToday = todayDayName === day;
+          const isDayDone = !!completedDays[day];
           const shortName = day.substring(0, 3);
 
           return (
@@ -131,7 +150,10 @@ export const GymWorkoutCard: React.FC = () => {
               }}
             >
               <span>{shortName}</span>
-              {isToday && (
+              {isDayDone && (
+                <Check size={12} strokeWidth={3} color={isSelected ? 'var(--accent-rose)' : 'var(--accent-success)'} />
+              )}
+              {!isDayDone && isToday && (
                 <span style={{
                   width: '5px',
                   height: '5px',
@@ -146,42 +168,65 @@ export const GymWorkoutCard: React.FC = () => {
 
       {/* Main Selected Day Workout Display Card */}
       <div 
-        onClick={() => setIsEditModalOpen(true)}
         style={{
-          background: 'var(--bg-tertiary)',
+          background: isCompleted ? 'var(--bg-card-hover)' : 'var(--bg-tertiary)',
           borderRadius: 'var(--radius-md)',
           padding: '16px 20px',
-          border: '1px solid var(--border-subtle)',
-          cursor: 'pointer',
+          border: isCompleted ? '1px solid var(--accent-success)' : '1px solid var(--border-subtle)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           transition: 'all 0.2s ease'
         }}
       >
-        <div>
-          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-            {selectedDay} {selectedDay === todayDayName && '• Today'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1 }}>
+          {/* 1-Tap Completion Checkbox */}
+          <div 
+            onClick={toggleWorkoutCompleted}
+            className={`checkbox-custom ${isCompleted ? 'checked' : ''}`}
+            style={{ width: '28px', height: '28px', cursor: 'pointer' }}
+            title={isCompleted ? "Mark workout incomplete" : "Mark workout complete"}
+          >
+            {isCompleted && <Check size={16} strokeWidth={3} />}
           </div>
-          <div style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-            {currentWorkoutType}
+
+          <div onClick={toggleWorkoutCompleted} style={{ cursor: 'pointer', flex: 1 }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+              {selectedDay} {selectedDay === todayDayName && '• Today'}
+            </div>
+            <div style={{ 
+              fontSize: '1.3rem', 
+              fontWeight: 800, 
+              color: isCompleted ? 'var(--text-tertiary)' : 'var(--text-primary)', 
+              letterSpacing: '-0.3px',
+              textDecoration: isCompleted ? 'line-through' : 'none'
+            }}>
+              {currentWorkoutType}
+            </div>
           </div>
         </div>
 
-        <div style={{ 
-          background: 'var(--accent-rose-soft)', 
-          borderRadius: 'var(--radius-full)', 
-          padding: '8px 14px', 
-          fontSize: '0.78rem', 
-          fontWeight: 700, 
-          color: 'var(--accent-rose)',
-          border: '1px solid var(--accent-rose)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px'
-        }}>
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsEditModalOpen(true);
+          }}
+          style={{ 
+            background: 'var(--accent-rose-soft)', 
+            borderRadius: 'var(--radius-full)', 
+            padding: '8px 14px', 
+            fontSize: '0.78rem', 
+            fontWeight: 700, 
+            color: 'var(--accent-rose)',
+            border: '1px solid var(--accent-rose)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            cursor: 'pointer'
+          }}
+        >
           <span>Change</span>
-        </div>
+        </button>
       </div>
 
       {/* Edit Workout Type Modal */}

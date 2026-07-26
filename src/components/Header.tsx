@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Sun, Moon, Bell, Sparkles, UserCheck, RefreshCw } from 'lucide-react';
+import { Sun, Moon, Bell, UserCheck, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
   onOpenNotifications: () => void;
@@ -47,23 +47,26 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth 
   return (
     <header className="header-container" style={{ padding: '20px 24px 12px 24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        {/* Brand Logo & Date */}
+        {/* Concentric Ring Aura Brand Logo & Date */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             width: '38px',
             height: '38px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-purple) 100%)',
+            background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 50%, #AF52DE 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(0, 122, 255, 0.25)',
+            boxShadow: '0 4px 16px rgba(88, 86, 214, 0.35)',
             color: '#FFFFFF'
           }}>
-            <Sparkles size={20} />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="8" stroke="white" strokeWidth="2.2" strokeOpacity="0.45" />
+              <circle cx="12" cy="12" r="4.5" fill="white" />
+            </svg>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '1.2rem', fontWeight: 900, letterSpacing: '-0.5px', color: 'var(--text-primary)', lineHeight: 1 }}>
+            <span style={{ fontSize: '1.25rem', fontWeight: 900, letterSpacing: '-0.6px', color: 'var(--text-primary)', lineHeight: 1 }}>
               AURA
             </span>
             <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.6px', textTransform: 'uppercase', marginTop: '3px' }}>
