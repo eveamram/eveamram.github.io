@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Dumbbell, Flame, Check, Edit2, Plus } from 'lucide-react';
+import { Dumbbell, Flame, Check, Plus } from 'lucide-react';
 import { DayOfWeek } from '../types';
 
 export const GymWorkoutCard: React.FC = () => {
@@ -14,19 +14,19 @@ export const GymWorkoutCard: React.FC = () => {
 
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(todayDayName);
   const [completedToday, setCompletedToday] = useState(false);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isCustomInputOpen, setIsCustomInputOpen] = useState(false);
   const [customTitleInput, setCustomTitleInput] = useState('');
 
   const currentSplit = gymSplits.find(s => s.day === selectedDay) || gymSplits[0];
 
   const splitPresets = [
-    'Abs & Biking',
-    'Outdoor Run',
-    'Core & Biking',
-    'Run & Abs',
-    'Biking & Cardio',
-    'Abs & Trail Run',
-    'Rest & Recovery'
+    'Push',
+    'Pull',
+    'Legs',
+    'Abs & Core',
+    'Biking',
+    'Running',
+    'Rest'
   ];
 
   const handleToggleComplete = () => {
@@ -39,7 +39,7 @@ export const GymWorkoutCard: React.FC = () => {
 
   const handleSelectPreset = (title: string) => {
     updateGymSplitFocusTitle(selectedDay, title);
-    setIsEditingTitle(false);
+    setIsCustomInputOpen(false);
   };
 
   const handleCustomTitleSubmit = (e: React.FormEvent) => {
@@ -48,13 +48,13 @@ export const GymWorkoutCard: React.FC = () => {
       updateGymSplitFocusTitle(selectedDay, customTitleInput.trim());
       setCustomTitleInput('');
     }
-    setIsEditingTitle(false);
+    setIsCustomInputOpen(false);
   };
 
   return (
     <div className="aura-card" style={{ marginBottom: 0 }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             background: completedToday ? 'var(--accent-success-soft)' : 'var(--accent-rose-soft)',
@@ -70,7 +70,7 @@ export const GymWorkoutCard: React.FC = () => {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
                 Gym & Workout Split
               </h3>
               {selectedDay === todayDayName && (
@@ -80,19 +80,9 @@ export const GymWorkoutCard: React.FC = () => {
               )}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                Today is <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{currentSplit.focusTitle}</span> day
-              </p>
-              <button
-                onClick={() => setIsEditingTitle(prev => !prev)}
-                className="icon-btn"
-                style={{ width: '22px', height: '22px', border: 'none', background: 'transparent' }}
-                title="Change workout focus for this day"
-              >
-                <Edit2 size={13} color="var(--text-tertiary)" />
-              </button>
-            </div>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600, marginTop: '2px' }}>
+              Today is <span style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>{currentSplit.focusTitle}</span> day
+            </p>
           </div>
         </div>
 
@@ -119,7 +109,7 @@ export const GymWorkoutCard: React.FC = () => {
       </div>
 
       {/* Day Selector Tabs */}
-      <div className="scroll-hide" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '12px' }}>
+      <div className="scroll-hide" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '14px' }}>
         {daysOfWeek.map((day) => {
           const isSelected = selectedDay === day;
           const isToday = todayDayName === day;
@@ -148,47 +138,66 @@ export const GymWorkoutCard: React.FC = () => {
         })}
       </div>
 
-      {/* Split Selector / Custom Focus Options */}
-      {isEditingTitle && (
-        <div style={{
-          background: 'var(--bg-tertiary)',
-          borderRadius: 'var(--radius-md)',
-          padding: '12px',
-          border: '1px solid var(--border-color)',
-          marginTop: '8px'
-        }}>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 700, marginBottom: '8px' }}>
-            Choose focus for {selectedDay}:
-          </p>
+      {/* Selectable Split Settings for current day */}
+      <div style={{
+        background: 'var(--bg-tertiary)',
+        borderRadius: 'var(--radius-md)',
+        padding: '12px 14px',
+        border: '1px solid var(--border-color)'
+      }}>
+        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>
+          Select Setting for {selectedDay}:
+        </span>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-            {splitPresets.map((preset) => {
-              const isActive = currentSplit.focusTitle === preset;
-              return (
-                <button
-                  key={preset}
-                  onClick={() => handleSelectPreset(preset)}
-                  style={{
-                    padding: '5px 10px',
-                    borderRadius: 'var(--radius-full)',
-                    border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
-                    background: isActive ? 'var(--accent-soft)' : 'var(--bg-card)',
-                    color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                    fontSize: '0.75rem',
-                    fontWeight: isActive ? 700 : 500,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {preset}
-                </button>
-              );
-            })}
-          </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {splitPresets.map((preset) => {
+            const isActive = currentSplit.focusTitle === preset;
+            return (
+              <button
+                key={preset}
+                onClick={() => handleSelectPreset(preset)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-full)',
+                  border: isActive ? '2px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                  background: isActive ? 'var(--accent-soft)' : 'var(--bg-card)',
+                  color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  fontSize: '0.8rem',
+                  fontWeight: isActive ? 800 : 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {preset}
+              </button>
+            );
+          })}
 
-          <form onSubmit={handleCustomTitleSubmit} style={{ display: 'flex', gap: '6px' }}>
+          <button
+            onClick={() => setIsCustomInputOpen(prev => !prev)}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 'var(--radius-full)',
+              border: '1px dashed var(--border-color)',
+              background: 'transparent',
+              color: 'var(--text-tertiary)',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            <Plus size={12} /> Custom...
+          </button>
+        </div>
+
+        {isCustomInputOpen && (
+          <form onSubmit={handleCustomTitleSubmit} style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
             <input
               type="text"
-              placeholder="Or type custom day focus..."
+              placeholder="e.g. Full Body, Arms..."
               value={customTitleInput}
               onChange={(e) => setCustomTitleInput(e.target.value)}
               className="input-text"
@@ -199,8 +208,8 @@ export const GymWorkoutCard: React.FC = () => {
               Save
             </button>
           </form>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
