@@ -45,13 +45,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications }) => {
   };
 
   return (
-    <header className="header-container" style={{ padding: '24px 20px 12px 20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+    <header className="header-container" style={{ padding: '20px 20px 10px 20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
         <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
           {formattedDate}
         </span>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {/* Segmented Phone vs Computer Switcher */}
           <div style={{
             display: 'flex',
@@ -66,12 +66,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications }) => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '4px 8px',
+                padding: '4px 10px',
                 borderRadius: 'var(--radius-full)',
                 border: 'none',
                 background: viewMode === 'phone' ? 'var(--accent-primary)' : 'transparent',
                 color: viewMode === 'phone' ? '#FFFFFF' : 'var(--text-secondary)',
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
@@ -87,12 +87,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications }) => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '4px 8px',
+                padding: '4px 10px',
                 borderRadius: 'var(--radius-full)',
                 border: 'none',
                 background: viewMode === 'computer' ? 'var(--accent-primary)' : 'transparent',
                 color: viewMode === 'computer' ? '#FFFFFF' : 'var(--text-secondary)',
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
@@ -104,6 +104,37 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications }) => {
             </button>
           </div>
 
+          {/* Theme Toggle */}
+          <button 
+            className="icon-btn" 
+            onClick={toggleTheme}
+            title="Toggle Theme"
+            style={{ width: '32px', height: '32px' }}
+          >
+            {theme === 'light' ? <Moon size={15} /> : <Sun size={15} />}
+          </button>
+
+          {/* Notification Button */}
+          <button 
+            className="icon-btn" 
+            onClick={onOpenNotifications}
+            style={{ position: 'relative', width: '32px', height: '32px' }}
+            title="Notifications"
+          >
+            <Bell size={15} />
+            {unreadCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '4px',
+                right: '4px',
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--accent-rose)'
+              }} />
+            )}
+          </button>
+
           {/* Reset Demo Data Button */}
           <button 
             className="icon-btn" 
@@ -111,38 +142,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications }) => {
               if (window.confirm("Reset dashboard data back to defaults?")) resetAllData();
             }}
             title="Reset Demo Data"
+            style={{ width: '32px', height: '32px' }}
           >
-            <RefreshCw size={15} />
-          </button>
-
-          {/* Theme Toggle */}
-          <button 
-            className="icon-btn" 
-            onClick={toggleTheme}
-            title="Toggle Theme"
-          >
-            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-          </button>
-
-          {/* Notification Button */}
-          <button 
-            className="icon-btn" 
-            onClick={onOpenNotifications}
-            style={{ position: 'relative' }}
-            title="Notifications"
-          >
-            <Bell size={16} />
-            {unreadCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '4px',
-                right: '4px',
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--accent-rose)'
-              }} />
-            )}
+            <RefreshCw size={14} />
           </button>
         </div>
       </div>
