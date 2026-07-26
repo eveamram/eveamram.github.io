@@ -71,6 +71,7 @@ interface StoreState {
   gymSplits: GymSplitDay[];
   toggleExerciseToday: (exerciseId: string) => void;
   addExerciseToDay: (day: DayOfWeek, name: string, setsReps: string) => void;
+  updateGymSplitFocusTitle: (day: DayOfWeek, title: string) => void;
 
   // Hydration & Mood
   waterGlassesToday: number;
@@ -437,6 +438,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
   };
 
+  const updateGymSplitFocusTitle = (day: DayOfWeek, title: string) => {
+    setGymSplits(prev => prev.map(split => {
+      if (split.day === day) {
+        return { ...split, focusTitle: title };
+      }
+      return split;
+    }));
+  };
+
   // Active Quote filtering
   const quotesForCategory = INITIAL_QUOTES.filter(q => q.category === selectedQuoteCategory);
   const activeQuote = quotesForCategory[0] || INITIAL_QUOTES[0];
@@ -495,6 +505,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       gymSplits,
       toggleExerciseToday,
       addExerciseToDay,
+      updateGymSplitFocusTitle,
       waterGlassesToday,
       incrementWater,
       decrementWater,

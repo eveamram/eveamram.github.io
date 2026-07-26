@@ -59,20 +59,23 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth 
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '4px 10px',
+              padding: '6px 14px',
               borderRadius: 'var(--radius-full)',
-              background: 'var(--bg-tertiary)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              fontSize: '0.8rem',
-              fontWeight: 700,
+              background: 'var(--accent-soft)',
+              border: '1px solid var(--accent-primary)',
+              color: 'var(--accent-primary)',
+              fontSize: '0.85rem',
+              fontWeight: 800,
               cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
-            title="Switch User Account Profile"
+            title="Click to Log In or Switch Account Profile"
           >
-            <span>{currentProfile?.avatarEmoji || '✨'}</span>
+            <span style={{ fontSize: '1rem' }}>{currentProfile?.avatarEmoji || '✨'}</span>
             <span>{currentProfile?.name || userName}</span>
+            <span style={{ fontSize: '0.7rem', opacity: 0.8, marginLeft: '4px' }}>
+              • Switch Person
+            </span>
           </button>
 
           {/* Theme Toggle */}
