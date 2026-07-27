@@ -152,7 +152,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const currentProfile = profiles.find(p => p.id === activeProfileId) || profiles[0] || DEFAULT_PROFILES[0];
   const [userName, setUserNameState] = useState<string>(currentProfile.name);
 
-  // Client interface preferences (kept in localStorage)
+  // Harmless UI preferences in localStorage
   const [theme, setThemeState] = useState<AppTheme>(() => {
     try {
       return (localStorage.getItem('aura_pref_theme') as AppTheme) || 'light';
@@ -165,7 +165,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isDeviceFrame, setIsDeviceFrame] = useState<boolean>(true);
 
   // Shared Profile State Arrays (Single Source of Truth = Supabase public.profile_items)
-  // CRITICAL: Initialized with EMPTY arrays [] so stale mock data is NEVER used or fallback-merged!
   const [goals, setGoals] = useState<GoalItem[]>([]);
   const [todaysMainGoalId, setTodaysMainGoalId] = useState<string>('g1');
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -185,7 +184,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     {
       id: 'n1',
       title: `Welcome ${currentProfile.name}!`,
-      body: 'Supabase real-time shared database connected.',
+      body: 'Supabase real-time shared database active.',
       date: 'Just Now',
       read: false,
       type: 'assistant'
@@ -206,10 +205,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Main Supabase public.profile_items Initial Fetch & Realtime Channel Subscription
   useEffect(() => {
     let isMounted = true;
-    console.log(`[Supabase Realtime Sync] Establishing connection for active profile: "${activeProfileId}"`);
+    console.log(`[Supabase Realtime Sync] Connecting for profile_id: "${activeProfileId}"`);
 
     async function loadSupabaseItems() {
-      console.log(`[Supabase Initial Load] Querying DB for profile_id = "${activeProfileId}"`);
+      console.log(`[Supabase Initial Load] Fetching DB items for profile_id = "${activeProfileId}"`);
       const rows = await fetchProfileItemsFromSupabase(activeProfileId);
       if (!isMounted) return;
 
@@ -292,9 +291,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         });
       }
 
-      // CRITICAL RULE: Unconditional Replacement!
-      // Database response is the authoritative source of truth.
-      console.log(`[Supabase Initial Load Replacement] Profile "${activeProfileId}" loaded: ${loadedGroceries.length} groceries, ${loadedTasks.length} tasks, ${loadedHabits.length} habits, ${loadedRoutines.length} routines, ${loadedReminders.length} reminders, ${loadedClasses.length} classes, ${loadedGoals.length} goals.`);
+      // Unconditional Authoritative DB Replacement
+      console.log(`[Supabase Load Complete] Loaded ${loadedGroceries.length} groceries, ${loadedTasks.length} tasks, ${loadedHabits.length} habits, ${loadedRoutines.length} routines, ${loadedReminders.length} reminders, ${loadedClasses.length} classes, ${loadedGoals.length} goals for profile "${activeProfileId}".`);
 
       setGroceries(loadedGroceries);
       setTasks(loadedTasks);
@@ -314,84 +312,37 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         'postgres_changes',
         { event: '*', schema: 'public', table: 'profile_items', filter: `profile_id=eq.${activeProfileId}` },
         (payload) => {
-          console.log('[Supabase Realtime Event Received]:', payload);
+          console.log('[Supabase Realtime Event]:', payload);
           const { eventType, new: newRow, old: oldRow } = payload as any;
 
-          // Ignore real-time events that do not match the active profile
           if (newRow && newRow.profile_id && newRow.profile_id !== activeProfileId) {
-            console.log(`[Supabase Realtime Ignored]: Profile ID "${newRow.profile_id}" does not match activeProfileId "${activeProfileId}"`);
             return;
           }
 
           if (eventType === 'INSERT' && newRow) {
-            console.log(`[Supabase Realtime INSERT]: item_type = "${newRow.item_type}", id = "${newRow.id}"`);
-
             if (newRow.item_type === 'grocery') {
               const incoming: GroceryItem = { id: newRow.id, name: newRow.title, category: newRow.category || 'Other', iconName: newRow.metadata?.iconName || 'ShoppingBag', completed: newRow.completed, quantity: newRow.metadata?.quantity || '1' };
-              setGroceries(currentItems => {
-                const alreadyExists = currentItems.some(item => item.id === incoming.id);
-                if (alreadyExists) {
-                  console.log(`[Duplicate Detection]: Grocery id "${incoming.id}" already exists locally. Ignored.`);
-                  return currentItems;
-                }
-                console.log(`[Realtime UI Update]: Appending grocery id "${incoming.id}" to UI state.`);
-                return [incoming, ...currentItems];
-              });
+              setGroceries(prev => prev.some(g => g.id === incoming.id) ? prev : [incoming, ...prev]);
             } else if (newRow.item_type === 'task') {
               const incoming: TaskItem = { id: newRow.id, title: newRow.title, category: newRow.category || 'Personal', completed: newRow.completed, priority: newRow.metadata?.priority || 'medium', createdAt: newRow.created_at || new Date().toISOString() };
-              setTasks(currentItems => {
-                const alreadyExists = currentItems.some(item => item.id === incoming.id);
-                if (alreadyExists) {
-                  console.log(`[Duplicate Detection]: Task id "${incoming.id}" already exists locally. Ignored.`);
-                  return currentItems;
-                }
-                console.log(`[Realtime UI Update]: Appending task id "${incoming.id}" to UI state.`);
-                return [incoming, ...currentItems];
-              });
+              setTasks(prev => prev.some(t => t.id === incoming.id) ? prev : [incoming, ...prev]);
             } else if (newRow.item_type === 'habit') {
               const incoming: HabitItem = { id: newRow.id, title: newRow.title, iconName: newRow.metadata?.iconName || 'Zap', streak: newRow.metadata?.streak || 0, bestStreak: newRow.metadata?.bestStreak || 0, targetDaysPerWeek: 7, completedToday: newRow.completed };
-              setHabits(currentItems => {
-                const alreadyExists = currentItems.some(item => item.id === incoming.id);
-                if (alreadyExists) {
-                  console.log(`[Duplicate Detection]: Habit id "${incoming.id}" already exists locally. Ignored.`);
-                  return currentItems;
-                }
-                return [incoming, ...currentItems];
-              });
+              setHabits(prev => prev.some(h => h.id === incoming.id) ? prev : [incoming, ...prev]);
             } else if (newRow.item_type === 'routine') {
               const incoming: RoutineTask = { id: newRow.id, day: newRow.metadata?.day || 'Monday', title: newRow.title, iconName: newRow.metadata?.iconName || 'CheckCircle', completedDates: newRow.metadata?.completedDates || [] };
-              setRoutines(currentItems => {
-                const alreadyExists = currentItems.some(item => item.id === incoming.id);
-                if (alreadyExists) {
-                  console.log(`[Duplicate Detection]: Routine id "${incoming.id}" already exists locally. Ignored.`);
-                  return currentItems;
-                }
-                return [incoming, ...currentItems];
-              });
+              setRoutines(prev => prev.some(r => r.id === incoming.id) ? prev : [incoming, ...prev]);
             } else if (newRow.item_type === 'reminder') {
               const incoming: ReminderItem = { id: newRow.id, title: newRow.title, category: newRow.category || 'Personal', dueDate: newRow.metadata?.dueDate || new Date().toISOString().split('T')[0], iconName: newRow.metadata?.iconName || 'Bell', dismissed: newRow.completed };
-              setReminders(currentItems => {
-                const alreadyExists = currentItems.some(item => item.id === incoming.id);
-                if (alreadyExists) return currentItems;
-                return [incoming, ...currentItems];
-              });
+              setReminders(prev => prev.some(r => r.id === incoming.id) ? prev : [incoming, ...prev]);
             } else if (newRow.item_type === 'class') {
               const incoming: ClassItem = { id: newRow.id, day: newRow.metadata?.day || 'Monday', name: newRow.title, time: newRow.metadata?.time || '09:00 AM', location: newRow.metadata?.location || 'Room 101', completed: newRow.completed };
-              setClasses(currentItems => {
-                const alreadyExists = currentItems.some(item => item.id === incoming.id);
-                if (alreadyExists) return currentItems;
-                return [incoming, ...currentItems];
-              });
+              setClasses(prev => prev.some(c => c.id === incoming.id) ? prev : [incoming, ...prev]);
             } else if (newRow.item_type === 'goal') {
               const incoming: GoalItem = { id: newRow.id, title: newRow.title, target: newRow.metadata?.target || 10, current: newRow.metadata?.current || 0, unit: newRow.metadata?.unit || 'hrs', iconName: newRow.metadata?.iconName || 'Target', color: newRow.metadata?.color || '#007AFF' };
-              setGoals(currentItems => {
-                const alreadyExists = currentItems.some(item => item.id === incoming.id);
-                if (alreadyExists) return currentItems;
-                return [incoming, ...currentItems];
-              });
+              setGoals(prev => prev.some(g => g.id === incoming.id) ? prev : [incoming, ...prev]);
             }
           } else if (eventType === 'UPDATE' && newRow) {
-            console.log(`[Supabase Realtime UPDATE]: item_type = "${newRow.item_type}", id = "${newRow.id}"`);
             if (newRow.item_type === 'grocery') {
               setGroceries(prev => prev.map(g => g.id === newRow.id ? { ...g, name: newRow.title, completed: newRow.completed, category: newRow.category || g.category, quantity: newRow.metadata?.quantity || g.quantity } : g));
             } else if (newRow.item_type === 'task') {
@@ -407,7 +358,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
           } else if (eventType === 'DELETE' && oldRow) {
             const targetId = oldRow.id;
-            console.log(`[Supabase Realtime DELETE]: Removing id "${targetId}" from local UI state (NO DB WRITE initiated).`);
             setGroceries(prev => prev.filter(g => g.id !== targetId));
             setTasks(prev => prev.filter(t => t.id !== targetId));
             setHabits(prev => prev.filter(h => h.id !== targetId));
@@ -418,13 +368,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }
         }
       )
-      .subscribe((status) => {
-        console.log(`[Supabase Realtime Subscription Status for "${activeProfileId}"]:`, status);
-      });
+      .subscribe();
 
     return () => {
       isMounted = false;
-      console.log(`[Supabase Realtime Subscription Cleanup] Unsubscribing channel for profile: "${activeProfileId}"`);
       supabase.removeChannel(channel);
     };
   }, [activeProfileId]);
@@ -436,7 +383,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setActiveProfileId(profileId);
     setUserNameState(target.name);
 
-    // Clear previous UI state before fetching new profile
     setGroceries([]);
     setTasks([]);
     setHabits([]);
@@ -543,29 +489,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addGoal = async (newGoal: Omit<GoalItem, 'id'>) => {
     if (goals.length >= 3) return;
-    const newId = generateUUID();
-    console.log(`[User Action INSERT Goal]: title = "${newGoal.title}", profile_id = "${activeProfileId}"`);
+    const id = generateUUID();
+    const goal: GoalItem = { ...newGoal, id };
 
-    const inserted = await insertProfileItemToSupabase({
-      id: newId,
+    // Optimistic UI Update (Appears instantly on screen)
+    setGoals(prev => prev.some(g => g.id === id) ? prev : [...prev, goal]);
+
+    await insertProfileItemToSupabase({
+      id,
       profile_id: activeProfileId,
       item_type: 'goal',
       title: newGoal.title,
       completed: false,
       metadata: { target: newGoal.target, current: newGoal.current, unit: newGoal.unit, iconName: newGoal.iconName, color: newGoal.color }
     });
-
-    if (inserted) {
-      console.log(`[User Action INSERT Goal Success]: Returned UUID = "${inserted.id}"`);
-      const goal: GoalItem = { ...newGoal, id: inserted.id };
-      setGoals(current => {
-        const exists = current.some(g => g.id === inserted.id);
-        if (exists) return current;
-        return [...current, goal];
-      });
-    } else {
-      console.error('[User Action INSERT Goal Failed]');
-    }
   };
 
   // Task functions
@@ -576,16 +513,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (completed) triggerConfetti();
 
     setTasks(prev => prev.map(t => t.id === id ? { ...t, completed } : t));
-
     await updateProfileItemInSupabase(id, activeProfileId, { completed });
   };
 
   const addTask = async (taskData: Omit<TaskItem, 'id' | 'createdAt' | 'completed'>) => {
-    const newId = generateUUID();
-    console.log(`[User Action INSERT Task]: title = "${taskData.title}", profile_id = "${activeProfileId}"`);
+    const id = generateUUID();
+    const newTask: TaskItem = {
+      ...taskData,
+      id,
+      completed: false,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
 
-    const inserted = await insertProfileItemToSupabase({
-      id: newId,
+    // Optimistic UI Update (Appears instantly on screen)
+    setTasks(prev => prev.some(t => t.id === id) ? prev : [newTask, ...prev]);
+
+    await insertProfileItemToSupabase({
+      id,
       profile_id: activeProfileId,
       item_type: 'task',
       title: taskData.title,
@@ -593,30 +537,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       completed: false,
       metadata: { priority: taskData.priority }
     });
-
-    if (inserted) {
-      console.log(`[User Action INSERT Task Success]: Returned UUID = "${inserted.id}"`);
-      const newTask: TaskItem = {
-        id: inserted.id,
-        title: inserted.title,
-        category: (inserted.category as any) || 'Personal',
-        completed: inserted.completed,
-        priority: inserted.metadata?.priority || 'medium',
-        createdAt: inserted.created_at || new Date().toISOString()
-      };
-
-      setTasks(current => {
-        const exists = current.some(t => t.id === inserted.id);
-        if (exists) return current;
-        return [newTask, ...current];
-      });
-    } else {
-      console.error('[User Action INSERT Task Failed]');
-    }
   };
 
   const deleteTask = async (id: string) => {
-    console.log(`[User Action DELETE Task]: id = "${id}"`);
     setTasks(prev => prev.filter(t => t.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
@@ -644,42 +567,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const addHabit = async (habitData: Omit<HabitItem, 'id' | 'streak' | 'bestStreak' | 'completedToday'>) => {
-    const newId = generateUUID();
-    console.log(`[User Action INSERT Habit]: title = "${habitData.title}", profile_id = "${activeProfileId}"`);
+    const id = generateUUID();
+    const newHabit: HabitItem = {
+      ...habitData,
+      id,
+      streak: 0,
+      bestStreak: 0,
+      completedToday: false
+    };
 
-    const inserted = await insertProfileItemToSupabase({
-      id: newId,
+    // Optimistic UI Update (Appears instantly on screen)
+    setHabits(prev => prev.some(h => h.id === id) ? prev : [...prev, newHabit]);
+
+    await insertProfileItemToSupabase({
+      id,
       profile_id: activeProfileId,
       item_type: 'habit',
       title: habitData.title,
       completed: false,
       metadata: { streak: 0, bestStreak: 0, iconName: habitData.iconName, targetDaysPerWeek: habitData.targetDaysPerWeek }
     });
-
-    if (inserted) {
-      console.log(`[User Action INSERT Habit Success]: Returned UUID = "${inserted.id}"`);
-      const newHabit: HabitItem = {
-        id: inserted.id,
-        title: inserted.title,
-        iconName: inserted.metadata?.iconName || 'Zap',
-        streak: 0,
-        bestStreak: 0,
-        targetDaysPerWeek: inserted.metadata?.targetDaysPerWeek || 7,
-        completedToday: inserted.completed
-      };
-
-      setHabits(current => {
-        const exists = current.some(h => h.id === inserted.id);
-        if (exists) return current;
-        return [newHabit, ...current];
-      });
-    } else {
-      console.error('[User Action INSERT Habit Failed]');
-    }
   };
 
   const deleteHabit = async (id: string) => {
-    console.log(`[User Action DELETE Habit]: id = "${id}"`);
     setHabits(prev => prev.filter(h => h.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
@@ -707,57 +617,49 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const addRoutineItem = async (item: Omit<RoutineTask, 'id' | 'completedDates'>) => {
-    const newId = generateUUID();
-    console.log(`[User Action INSERT Routine]: title = "${item.title}", profile_id = "${activeProfileId}"`);
+    const id = generateUUID();
+    const newRoutine: RoutineTask = {
+      ...item,
+      id,
+      completedDates: []
+    };
 
-    const inserted = await insertProfileItemToSupabase({
-      id: newId,
+    // Optimistic UI Update (Appears instantly on screen)
+    setRoutines(prev => prev.some(r => r.id === id) ? prev : [...prev, newRoutine]);
+
+    await insertProfileItemToSupabase({
+      id,
       profile_id: activeProfileId,
       item_type: 'routine',
       title: item.title,
       completed: false,
       metadata: { day: item.day, iconName: item.iconName, completedDates: [] }
     });
-
-    if (inserted) {
-      console.log(`[User Action INSERT Routine Success]: Returned UUID = "${inserted.id}"`);
-      const newRoutine: RoutineTask = {
-        id: inserted.id,
-        day: inserted.metadata?.day || 'Monday',
-        title: inserted.title,
-        iconName: inserted.metadata?.iconName || 'CheckCircle',
-        completedDates: []
-      };
-
-      setRoutines(current => {
-        const exists = current.some(r => r.id === inserted.id);
-        if (exists) return current;
-        return [newRoutine, ...current];
-      });
-    } else {
-      console.error('[User Action INSERT Routine Failed]');
-    }
   };
 
   const deleteRoutineItem = async (id: string) => {
-    console.log(`[User Action DELETE Routine]: id = "${id}"`);
     setRoutines(prev => prev.filter(r => r.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
 
   // Reminder functions
   const dismissReminder = async (id: string) => {
-    console.log(`[User Action Dismiss/Delete Reminder]: id = "${id}"`);
     setReminders(prev => prev.filter(r => r.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
 
   const addReminder = async (reminderData: Omit<ReminderItem, 'id' | 'dismissed'>) => {
-    const newId = generateUUID();
-    console.log(`[User Action INSERT Reminder]: title = "${reminderData.title}", profile_id = "${activeProfileId}"`);
+    const id = generateUUID();
+    const newRem: ReminderItem = {
+      ...reminderData,
+      id
+    };
 
-    const inserted = await insertProfileItemToSupabase({
-      id: newId,
+    // Optimistic UI Update (Appears instantly on screen)
+    setReminders(prev => prev.some(r => r.id === id) ? prev : [...prev, newRem]);
+
+    await insertProfileItemToSupabase({
+      id,
       profile_id: activeProfileId,
       item_type: 'reminder',
       title: reminderData.title,
@@ -765,26 +667,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       completed: false,
       metadata: { dueDate: reminderData.dueDate, iconName: reminderData.iconName, notes: reminderData.notes, amount: reminderData.amount }
     });
-
-    if (inserted) {
-      console.log(`[User Action INSERT Reminder Success]: Returned UUID = "${inserted.id}"`);
-      const newRem: ReminderItem = {
-        id: inserted.id,
-        title: inserted.title,
-        category: (inserted.category as any) || 'Personal',
-        dueDate: inserted.metadata?.dueDate || new Date().toISOString().split('T')[0],
-        iconName: inserted.metadata?.iconName || 'Bell',
-        dismissed: inserted.completed
-      };
-
-      setReminders(current => {
-        const exists = current.some(r => r.id === inserted.id);
-        if (exists) return current;
-        return [newRem, ...current];
-      });
-    } else {
-      console.error('[User Action INSERT Reminder Failed]');
-    }
   };
 
   // Gym functions
@@ -851,41 +733,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Class functions
   const addClass = async (itemData: Omit<ClassItem, 'id'>) => {
-    const newId = generateUUID();
-    console.log(`[User Action INSERT Class]: name = "${itemData.name}", profile_id = "${activeProfileId}"`);
+    const id = generateUUID();
+    const newClass: ClassItem = {
+      ...itemData,
+      id
+    };
 
-    const inserted = await insertProfileItemToSupabase({
-      id: newId,
+    // Optimistic UI Update (Appears instantly on screen)
+    setClasses(prev => prev.some(c => c.id === id) ? prev : [...prev, newClass]);
+
+    await insertProfileItemToSupabase({
+      id,
       profile_id: activeProfileId,
       item_type: 'class',
       title: itemData.name,
       completed: false,
       metadata: { day: itemData.day, time: itemData.time, location: itemData.location }
     });
-
-    if (inserted) {
-      console.log(`[User Action INSERT Class Success]: Returned UUID = "${inserted.id}"`);
-      const newClass: ClassItem = {
-        id: inserted.id,
-        day: inserted.metadata?.day || 'Monday',
-        name: inserted.title,
-        time: inserted.metadata?.time || '09:00 AM',
-        location: inserted.metadata?.location || 'Room 101',
-        completed: inserted.completed
-      };
-
-      setClasses(current => {
-        const exists = current.some(c => c.id === inserted.id);
-        if (exists) return current;
-        return [newClass, ...current];
-      });
-    } else {
-      console.error('[User Action INSERT Class Failed]');
-    }
   };
 
   const deleteClass = async (id: string) => {
-    console.log(`[User Action DELETE Class]: id = "${id}"`);
     setClasses(prev => prev.filter(c => c.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
@@ -897,46 +764,40 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (nextComp) triggerConfetti();
 
     setClasses(prev => prev.map(c => c.id === id ? { ...c, completed: nextComp } : c));
-
     await updateProfileItemInSupabase(id, activeProfileId, { completed: nextComp });
   };
 
   // Grocery functions
   const addGroceryItem = async (itemData: Omit<GroceryItem, 'id' | 'completed'>) => {
-    const newId = generateUUID();
-    console.log(`[User Action INSERT Grocery]: name = "${itemData.name}", profile_id = "${activeProfileId}"`);
+    const id = generateUUID();
+    const newItem: GroceryItem = {
+      ...itemData,
+      id,
+      completed: false
+    };
 
-    const inserted = await insertProfileItemToSupabase({
-      id: newId,
-      profile_id: activeProfileId,
-      item_type: 'grocery',
-      title: itemData.name,
-      category: itemData.category,
-      completed: false,
-      metadata: { quantity: itemData.quantity, iconName: itemData.iconName }
+    console.log(`[User Action ADD Grocery]: name = "${itemData.name}", id = "${id}"`);
+
+    // 1. Instant Optimistic UI Update (Renders on screen IMMEDIATELY!)
+    setGroceries(prev => {
+      const alreadyExists = prev.some(g => g.id === id);
+      if (alreadyExists) return prev;
+      return [newItem, ...prev];
     });
 
-    if (inserted) {
-      console.log(`[User Action INSERT Grocery Success]: Returned UUID = "${inserted.id}"`);
-      const newItem: GroceryItem = {
-        id: inserted.id,
-        name: inserted.title,
-        category: (inserted.category as any) || 'Other',
-        iconName: inserted.metadata?.iconName || 'ShoppingBag',
-        completed: inserted.completed,
-        quantity: inserted.metadata?.quantity || '1'
-      };
-
-      setGroceries(current => {
-        const alreadyExists = current.some(g => g.id === inserted.id);
-        if (alreadyExists) {
-          console.log(`[Duplicate Detection]: Grocery id "${inserted.id}" already present in local state. Skipping duplicate append.`);
-          return current;
-        }
-        return [newItem, ...current];
+    // 2. Asynchronous Supabase Persistence
+    try {
+      await insertProfileItemToSupabase({
+        id,
+        profile_id: activeProfileId,
+        item_type: 'grocery',
+        title: itemData.name,
+        category: itemData.category,
+        completed: false,
+        metadata: { quantity: itemData.quantity, iconName: itemData.iconName }
       });
-    } else {
-      console.error('[User Action INSERT Grocery Failed]');
+    } catch (err) {
+      console.error('[Supabase Insert Async Error]:', err);
     }
   };
 
