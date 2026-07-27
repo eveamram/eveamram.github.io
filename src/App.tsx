@@ -75,7 +75,7 @@ const AppContent: React.FC = () => {
         onOpenAuth={() => setIsAuthOpen(true)}
       />
       
-      <main style={{ flex: 1, paddingBottom: '30px' }}>
+      <main style={{ flex: 1, paddingBottom: '100px' }}>
         {renderActiveView()}
       </main>
 

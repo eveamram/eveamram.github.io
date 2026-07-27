@@ -7,7 +7,7 @@ interface DeviceFrameProps {
 
 export const DeviceFrame: React.FC<DeviceFrameProps> = ({ children }) => {
   return (
-    <div className="app-container animate-fade-in">
+    <div className="app-container">
       {children}
     </div>
   );
