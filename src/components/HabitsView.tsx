@@ -98,6 +98,60 @@ export const HabitsView: React.FC = () => {
         </button>
       </div>
 
+      {/* Quick Add Common Habits Chips Row */}
+      <div style={{ marginBottom: '16px' }}>
+        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+          Quick Add Popular Habits
+        </div>
+        <div className="scroll-hide" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+          {[
+            { title: 'Drink 8 Glasses Water', iconName: 'Droplets' },
+            { title: '10,000 Daily Steps', iconName: 'Footprints' },
+            { title: '10 Min Meditation', iconName: 'HeartPulse' },
+            { title: 'Read 20 Pages', iconName: 'BookOpen' },
+            { title: 'Take Daily Vitamins', iconName: 'Pill' },
+            { title: 'Morning Stretch', iconName: 'Activity' },
+            { title: 'Night Routine & Skincare', iconName: 'Moon' },
+            { title: '8 Hours Sleep', iconName: 'BedDouble' },
+            { title: 'No Screens Before Bed', iconName: 'Moon' }
+          ].map((preset) => {
+            const exists = habits.some(h => h.title.toLowerCase() === preset.title.toLowerCase());
+            return (
+              <button
+                key={preset.title}
+                onClick={() => {
+                  if (!exists) {
+                    addHabit({
+                      title: preset.title,
+                      iconName: preset.iconName,
+                      targetDaysPerWeek: 7
+                    });
+                  }
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-full)',
+                  background: exists ? 'var(--accent-soft)' : 'var(--bg-tertiary)',
+                  color: exists ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  border: '1px solid var(--border-color)',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  cursor: exists ? 'default' : 'pointer',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  opacity: exists ? 0.75 : 1,
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <span>{exists ? '✓' : '+'} {preset.title}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Inline Create Habit Form */}
       {isAddModalOpen && (
         <form 

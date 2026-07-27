@@ -62,6 +62,7 @@ interface StoreState {
   tasks: TaskItem[];
   toggleTask: (id: string) => void;
   addTask: (task: Omit<TaskItem, 'id' | 'createdAt' | 'completed'>) => void;
+  updateTask: (id: string, updates: Partial<Omit<TaskItem, 'id'>>) => void;
   deleteTask: (id: string) => void;
 
   // Habits
@@ -608,6 +609,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
+  const updateTask = async (id: string, updates: Partial<Omit<TaskItem, 'id'>>) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+
+    const dbUpdates: any = {};
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.completed !== undefined) dbUpdates.completed = updates.completed;
+    if (updates.priority !== undefined) {
+      dbUpdates.metadata = { priority: updates.priority };
+    }
+
+    await updateProfileItemInSupabase(id, activeProfileId, dbUpdates);
+  };
+
   const deleteTask = async (id: string) => {
     setTasks(prev => prev.filter(t => t.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
@@ -961,6 +976,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       tasks,
       toggleTask,
       addTask,
+      updateTask,
       deleteTask,
       habits,
       toggleHabitToday,
