@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
 import { ActiveTab } from '../types';
-import { Home, CheckSquare, Activity, ShoppingBag, Bell, Calendar, ShieldCheck, Moon, Sun } from 'lucide-react';
+import { Home, CheckSquare, Activity, ShoppingBag, Bell, Calendar, ShieldCheck, Moon, Sun, X } from 'lucide-react';
 
 interface SidebarProps {
   onOpenAuth: () => void;
@@ -49,9 +49,9 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.35)',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
             zIndex: 99999,
             display: 'block'
           }}
@@ -77,32 +77,54 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
       >
       {/* Top Section: Brand & Nav Links */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {/* Brand Logo Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingLeft: '8px' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 50%, #AF52DE 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(88, 86, 214, 0.3)',
-            color: '#FFFFFF'
-          }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="8" stroke="white" strokeWidth="2.2" strokeOpacity="0.45" />
-              <circle cx="12" cy="12" r="4.5" fill="white" />
-            </svg>
+        {/* Brand Logo Header & Mobile Close */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 50%, #AF52DE 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 14px rgba(88, 86, 214, 0.3)',
+              color: '#FFFFFF'
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="8" stroke="white" strokeWidth="2.2" strokeOpacity="0.45" />
+                <circle cx="12" cy="12" r="4.5" fill="white" />
+              </svg>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '1.15rem', fontWeight: 900, letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>
+                AURA
+              </span>
+              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--accent-teal)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                Dashboard
+              </span>
+            </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '1.15rem', fontWeight: 900, letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>
-              AURA
-            </span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--accent-teal)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-              Dashboard
-            </span>
-          </div>
+
+          {isOpenMobile && onCloseMobile && (
+            <button
+              onClick={onCloseMobile}
+              style={{
+                background: 'var(--bg-tertiary)',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Close Menu"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
 
         {/* Sidebar Nav Items */}
