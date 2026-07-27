@@ -28,11 +28,53 @@ export interface ProfileItemRow {
   updated_at?: string;
 }
 
-// Master Global Cloud Engine (Unlimited JSONBlob Cloud Storage for instant phone-to-computer sync)
+// Master Global Cloud Engine Registry (Unlimited JSONBlob Cloud Storage for instant cross-device sync)
 const PUBLIC_PROFILE_CLOUD_MAP: Record<string, string> = {
   eve: '019fa59d-a3e8-7e19-9a1a-cec298ae89fd',
   alex: '019fa5a0-8e01-7a88-b1ef-873a8e4e6ca3'
 };
+
+// Helper: Get or dynamically provision a master cloud database blob for ANY profile ID
+async function getBlobIdForProfile(profileId: string): Promise<string | null> {
+  const normalized = profileId.toLowerCase().trim();
+  if (PUBLIC_PROFILE_CLOUD_MAP[normalized]) {
+    return PUBLIC_PROFILE_CLOUD_MAP[normalized];
+  }
+
+  try {
+    const cached = localStorage.getItem(`aura_cloud_blob_id_${normalized}`);
+    if (cached) {
+      PUBLIC_PROFILE_CLOUD_MAP[normalized] = cached;
+      return cached;
+    }
+
+    // Dynamically provision a dedicated cloud database blob for new profile
+    const res = await fetch('https://jsonblob.com/api/jsonBlob', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: [] })
+    });
+
+    if (res.ok) {
+      const location = res.headers.get('Location') || res.headers.get('location');
+      if (location) {
+        const parts = location.split('/');
+        const newBlobId = parts[parts.length - 1];
+        if (newBlobId) {
+          PUBLIC_PROFILE_CLOUD_MAP[normalized] = newBlobId;
+          try {
+            localStorage.setItem(`aura_cloud_blob_id_${normalized}`, newBlobId);
+          } catch {}
+          return newBlobId;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Dynamic Cloud Provision Exception]:', err);
+  }
+
+  return null;
+}
 
 function getLocalStore(profileId: string): ProfileItemRow[] {
   try {
@@ -48,9 +90,9 @@ function saveLocalStore(profileId: string, items: ProfileItemRow[]) {
   } catch {}
 }
 
-// Global Cloud Storage Engine
+// Global Cloud Storage Engine for All Profiles
 async function fetchFromGlobalCloud(profileId: string): Promise<ProfileItemRow[] | null> {
-  const blobId = PUBLIC_PROFILE_CLOUD_MAP[profileId];
+  const blobId = await getBlobIdForProfile(profileId);
   if (!blobId) return null;
 
   try {
@@ -72,7 +114,7 @@ async function fetchFromGlobalCloud(profileId: string): Promise<ProfileItemRow[]
 }
 
 async function saveToGlobalCloud(profileId: string, items: ProfileItemRow[]): Promise<boolean> {
-  const blobId = PUBLIC_PROFILE_CLOUD_MAP[profileId];
+  const blobId = await getBlobIdForProfile(profileId);
   if (!blobId) return false;
 
   try {
@@ -137,7 +179,7 @@ export async function insertProfileItemToSupabase(item: Omit<ProfileItemRow, 'cr
     } catch {}
   }
 
-  // 3. Write to Global Cloud Database (cross-device sync for phones & computers)
+  // 3. Write to Global Cloud Database (cross-device sync for all profiles)
   saveToGlobalCloud(item.profile_id, updated);
 
   return row;
