@@ -87,20 +87,18 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 50%, #AF52DE 100%)',
+              width: '38px',
+              height: '38px',
+              borderRadius: '12px',
+              background: currentProfile.color ? `linear-gradient(135deg, ${currentProfile.color} 0%, #AF52DE 100%)` : 'linear-gradient(135deg, #007AFF 0%, #AF52DE 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(88, 86, 214, 0.3)',
-              color: '#FFFFFF'
+              fontSize: '1.25rem',
+              boxShadow: '0 4px 14px rgba(0, 122, 255, 0.25)',
+              flexShrink: 0
             }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="8" stroke="white" strokeWidth="2.2" strokeOpacity="0.45" />
-                <circle cx="12" cy="12" r="4.5" fill="white" />
-              </svg>
+              {currentProfile.avatarEmoji || '✨'}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '1.15rem', fontWeight: 900, letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>

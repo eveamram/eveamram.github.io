@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useStore } from '../store/useStore';
-import { Dumbbell, Pencil, Check, X, Plus } from 'lucide-react';
+import { Dumbbell, Pencil, Check, X, Plus, Sparkles, Flame, Activity, Zap } from 'lucide-react';
 import { DayOfWeek } from '../types';
 
 export const GymWorkoutCard: React.FC = () => {
-  const { gymSplits, gymCompletedDays, toggleGymWorkoutCompleted, updateGymSplitFocusTitle, triggerConfetti } = useStore();
+  const { gymSplits, gymCompletedDays, toggleGymWorkoutCompleted, updateGymSplitFocusTitle, triggerConfetti, currentProfile } = useStore();
 
   const daysOfWeek: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
@@ -37,6 +37,23 @@ export const GymWorkoutCard: React.FC = () => {
   const currentSplit = gymSplits.find(s => s.day === selectedDay) || { day: selectedDay, focusTitle: 'Rest Day', exercises: [] };
   const currentWorkoutType = currentSplit.focusTitle || 'Rest Day';
   const isCompleted = !!gymCompletedDays[selectedDay];
+
+  const getWorkoutIcon = (workoutTitle: string, avatarEmoji?: string) => {
+    const lower = workoutTitle.toLowerCase();
+    if (lower.includes('rest') || lower.includes('recovery')) {
+      return <span style={{ fontSize: '1.15rem' }}>{avatarEmoji || '🧘'}</span>;
+    }
+    if (lower.includes('cardio') || lower.includes('run')) {
+      return <Flame size={20} color="var(--accent-rose)" />;
+    }
+    if (lower.includes('leg') || lower.includes('glute')) {
+      return <Activity size={20} color="var(--accent-success)" />;
+    }
+    if (lower.includes('core') || lower.includes('back')) {
+      return <Zap size={20} color="var(--accent-warning)" />;
+    }
+    return <Dumbbell size={20} color="var(--accent-rose)" />;
+  };
 
   const toggleWorkoutCompleted = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -77,11 +94,11 @@ export const GymWorkoutCard: React.FC = () => {
             color: 'var(--accent-rose)',
             flexShrink: 0
           }}>
-            <Dumbbell size={20} />
+            {getWorkoutIcon(currentWorkoutType, currentProfile?.avatarEmoji)}
           </div>
           <div>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
-              Gym & Workout Split
+              {currentProfile?.name ? `${currentProfile.name}'s Workout Split` : 'Gym & Workout Split'}
             </h3>
           </div>
         </div>

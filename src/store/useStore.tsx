@@ -225,6 +225,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const loadedReminders: ReminderItem[] = [];
       const loadedClasses: ClassItem[] = [];
       const loadedGoals: GoalItem[] = [];
+      const loadedGymCompleted: Record<string, boolean> = {};
+      const loadedGymFocus: Record<string, string> = {};
 
       if (rows && rows.length > 0) {
         rows.forEach(r => {
@@ -293,8 +295,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               iconName: r.metadata?.iconName || 'Target',
               color: r.metadata?.color || '#007AFF'
             });
+          } else if (r.item_type === 'gym_split') {
+            const day = (r.category || r.metadata?.day) as DayOfWeek;
+            if (day) {
+              loadedGymCompleted[day] = r.completed;
+              if (r.title) {
+                loadedGymFocus[day] = r.title;
+              }
+            }
           }
         });
+      }
+
+      if (Object.keys(loadedGymCompleted).length > 0) {
+        setGymCompletedDays(prev => ({ ...prev, ...loadedGymCompleted }));
+      }
+      if (Object.keys(loadedGymFocus).length > 0) {
+        setGymSplits(prev => prev.map(split => {
+          if (loadedGymFocus[split.day]) {
+            return { ...split, focusTitle: loadedGymFocus[split.day] };
+          }
+          return split;
+        }));
       }
 
       // Unconditional Authoritative DB Replacement
@@ -734,13 +756,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
   };
 
-  const updateGymSplitFocusTitle = (day: DayOfWeek, title: string) => {
+  const updateGymSplitFocusTitle = async (day: DayOfWeek, title: string) => {
     setGymSplits(prev => prev.map(split => {
       if (split.day === day) {
         return { ...split, focusTitle: title };
       }
       return split;
     }));
+
+    await insertProfileItemToSupabase({
+      id: `gym_focus_${day}_${activeProfileId}`,
+      profile_id: activeProfileId,
+      item_type: 'gym_split',
+      title,
+      category: day,
+      completed: !!gymCompletedDays[day],
+      metadata: { day, focusTitle: title }
+    });
   };
 
   const toggleGymWorkoutCompleted = async (day: DayOfWeek) => {
@@ -748,14 +780,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (nextState) triggerConfetti();
     setGymCompletedDays(prev => ({ ...prev, [day]: nextState }));
 
+    const currentFocus = gymSplits.find(s => s.day === day)?.focusTitle || 'Rest Day';
+
     await insertProfileItemToSupabase({
-      id: generateUUID(),
+      id: `gym_focus_${day}_${activeProfileId}`,
       profile_id: activeProfileId,
       item_type: 'gym_split',
-      title: `Workout ${day}`,
+      title: currentFocus,
       category: day,
       completed: nextState,
-      metadata: { day }
+      metadata: { day, focusTitle: currentFocus }
     });
   };
 
