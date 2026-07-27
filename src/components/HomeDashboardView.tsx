@@ -102,8 +102,8 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({ onOpenQuic
         </div>
       </div>
 
-      {/* Today Progress & Important Reminder Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+      {/* Today Progress Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
         {/* Habit Completion Progress */}
         <div className="aura-card" style={{ marginBottom: 0, padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -144,42 +144,6 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({ onOpenQuic
           <div style={{ width: '100%', height: '8px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
             <div style={{ width: `${taskPercentage}%`, height: '100%', background: 'linear-gradient(90deg, #34C759, #30B0C7)', transition: 'width 0.4s ease' }} />
           </div>
-        </div>
-
-        {/* Important Reminder Card */}
-        <div 
-          className="aura-card aura-card-interactive" 
-          onClick={() => setActiveTab('reminders')}
-          style={{ marginBottom: 0, padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Bell size={14} color="var(--accent-rose)" /> Important Reminder
-            </span>
-            <button style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}>
-              View All <ChevronRight size={12} />
-            </button>
-          </div>
-
-          {nextReminder ? (
-            <div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
-                {nextReminder.title}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                <span className="badge-pill" style={{ background: 'var(--accent-rose-soft)', color: 'var(--accent-rose)', padding: '2px 8px', fontSize: '0.7rem' }}>
-                  {nextReminder.category}
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                  <Calendar size={12} /> Due: {nextReminder.dueDate}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-              No upcoming urgent reminders set.
-            </div>
-          )}
         </div>
       </div>
 
