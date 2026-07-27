@@ -370,9 +370,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       )
       .subscribe();
 
+    // BroadcastChannel cross-tab real-time sync for same origin/profile
+    let broadcastChannel: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      broadcastChannel = new BroadcastChannel(`aura_profile_sync_${activeProfileId}`);
+      broadcastChannel.onmessage = (event) => {
+        console.log('[BroadcastChannel Sync Event Received]:', event.data);
+        loadSupabaseItems();
+      };
+    }
+
     return () => {
       isMounted = false;
       supabase.removeChannel(channel);
+      if (broadcastChannel) broadcastChannel.close();
     };
   }, [activeProfileId]);
 
