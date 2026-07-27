@@ -147,7 +147,13 @@ function generateUUID(): string {
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [profiles, setProfiles] = useState<UserProfile[]>(DEFAULT_PROFILES);
-  const [activeProfileId, setActiveProfileId] = useState<string>('eve');
+  const [activeProfileId, setActiveProfileId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('aura_active_profile_id') || 'eve';
+    } catch {
+      return 'eve';
+    }
+  });
 
   const currentProfile = profiles.find(p => p.id === activeProfileId) || profiles[0] || DEFAULT_PROFILES[0];
   const [userName, setUserNameState] = useState<string>(currentProfile.name);
@@ -393,6 +399,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setActiveProfileId(profileId);
     setUserNameState(target.name);
+    try {
+      localStorage.setItem('aura_active_profile_id', profileId);
+    } catch {}
 
     setGroceries([]);
     setTasks([]);
