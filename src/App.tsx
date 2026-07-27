@@ -102,13 +102,11 @@ const AppContent: React.FC = () => {
             onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
           />
           
-          <main style={{ flex: 1, paddingBottom: '100px' }}>
+          <main style={{ flex: 1, paddingBottom: '40px' }}>
             {renderActiveView()}
           </main>
         </div>
       </div>
-
-      <Navigation />
 
       <NotificationsModal
         isOpen={isNotificationsOpen}
