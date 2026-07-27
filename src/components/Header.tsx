@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
-import { Bell, PanelLeftClose, PanelLeftOpen, Search, Plus, Moon, Sun } from 'lucide-react';
+import { Bell, PanelLeftClose, PanelLeftOpen, Moon, Sun } from 'lucide-react';
 
 interface HeaderProps {
   onOpenNotifications: () => void;
@@ -97,31 +97,8 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Command Center, Quick Add, Notifications, Theme Toggle */}
+        {/* Right Side: Notifications & Theme Toggle Only */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Command Palette Button */}
-          <button
-            onClick={onOpenCommandPalette}
-            className="btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '0.8rem', gap: '6px', height: '38px' }}
-            title="Search & Commands (⌘K)"
-          >
-            <Search size={16} />
-            <span className="desktop-only" style={{ fontWeight: 600 }}>Search</span>
-            <kbd style={{ fontSize: '0.7rem', padding: '1px 4px', background: 'var(--bg-card)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>⌘K</kbd>
-          </button>
-
-          {/* Quick Add Button */}
-          <button
-            onClick={onOpenQuickAdd}
-            className="btn-primary"
-            style={{ padding: '6px 14px', fontSize: '0.8rem', gap: '4px', height: '38px' }}
-            title="Quick Add Task, Grocery, or Habit"
-          >
-            <Plus size={16} />
-            <span className="desktop-only">Add</span>
-          </button>
-
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
