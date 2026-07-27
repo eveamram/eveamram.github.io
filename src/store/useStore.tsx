@@ -17,9 +17,10 @@ import {
   MoodType,
   ViewMode,
   UserProfile,
-  ClassItem
+  ClassItem,
+  GroceryItem
 } from '../types';
-import { INITIAL_TASKS, INITIAL_HABITS, INITIAL_REMINDERS, INITIAL_GOALS, INITIAL_ROUTINES, INITIAL_GYM_SPLITS, INITIAL_CLASSES } from '../data/initialData';
+import { INITIAL_TASKS, INITIAL_HABITS, INITIAL_REMINDERS, INITIAL_GOALS, INITIAL_ROUTINES, INITIAL_GYM_SPLITS, INITIAL_CLASSES, INITIAL_GROCERIES } from '../data/initialData';
 import { INITIAL_QUOTES } from '../data/quotes';
 
 interface StoreState {
@@ -83,6 +84,13 @@ interface StoreState {
   addClass: (item: Omit<ClassItem, 'id'>) => void;
   deleteClass: (id: string) => void;
   toggleClassCompleted: (id: string) => void;
+
+  // Grocery List
+  groceries: GroceryItem[];
+  addGroceryItem: (item: Omit<GroceryItem, 'id' | 'completed'>) => void;
+  deleteGroceryItem: (id: string) => void;
+  toggleGroceryItem: (id: string) => void;
+  clearCompletedGroceries: () => void;
 
   // Hydration & Mood
   waterGlassesToday: number;
@@ -169,6 +177,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [gymSplits, setGymSplits] = useState<GymSplitDay[]>(() => sanitizeGymSplits(getProfileStorage(activeProfileId, 'gymSplits', INITIAL_GYM_SPLITS)));
   const [gymCompletedDays, setGymCompletedDays] = useState<Record<string, boolean>>(() => getProfileStorage(activeProfileId, 'gymCompletedDays', {}));
   const [classes, setClasses] = useState<ClassItem[]>(() => getProfileStorage(activeProfileId, 'classes', INITIAL_CLASSES));
+  const [groceries, setGroceries] = useState<GroceryItem[]>(() => getProfileStorage(activeProfileId, 'groceries', INITIAL_GROCERIES));
   
   const [waterGlassesToday, setWaterGlassesToday] = useState<number>(() => getProfileStorage(activeProfileId, 'waterGlasses', 5));
   const [todayMood, setTodayMoodState] = useState<MoodType | null>(() => getProfileStorage(activeProfileId, 'todayMood', 'Energized ⚡'));
@@ -209,6 +218,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymSplits`, JSON.stringify(gymSplits)); }, [gymSplits, activeProfileId]);
   useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymCompletedDays`, JSON.stringify(gymCompletedDays)); }, [gymCompletedDays, activeProfileId]);
   useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_classes`, JSON.stringify(classes)); }, [classes, activeProfileId]);
+  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_groceries`, JSON.stringify(groceries)); }, [groceries, activeProfileId]);
 
   const switchProfile = (profileId: string) => {
     const target = profiles.find(p => p.id === profileId);
@@ -225,6 +235,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setGymSplits(getProfileStorage(profileId, 'gymSplits', INITIAL_GYM_SPLITS));
     setGymCompletedDays(getProfileStorage(profileId, 'gymCompletedDays', {}));
     setClasses(getProfileStorage(profileId, 'classes', INITIAL_CLASSES));
+    setGroceries(getProfileStorage(profileId, 'groceries', INITIAL_GROCERIES));
     setThemeState(getProfileStorage(profileId, 'theme', 'light'));
   };
 
@@ -523,6 +534,35 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
   };
 
+  // Grocery functions
+  const addGroceryItem = (itemData: Omit<GroceryItem, 'id' | 'completed'>) => {
+    const newItem: GroceryItem = {
+      ...itemData,
+      id: 'g_' + Date.now(),
+      completed: false
+    };
+    setGroceries(prev => [...prev, newItem]);
+  };
+
+  const deleteGroceryItem = (id: string) => {
+    setGroceries(prev => prev.filter(g => g.id !== id));
+  };
+
+  const toggleGroceryItem = (id: string) => {
+    setGroceries(prev => prev.map(g => {
+      if (g.id === id) {
+        const nextComp = !g.completed;
+        if (nextComp) triggerConfetti();
+        return { ...g, completed: nextComp };
+      }
+      return g;
+    }));
+  };
+
+  const clearCompletedGroceries = () => {
+    setGroceries(prev => prev.filter(g => !g.completed));
+  };
+
   // Active Quote filtering
   const quotesForCategory = INITIAL_QUOTES.filter(q => q.category === selectedQuoteCategory);
   const activeQuote = quotesForCategory[0] || INITIAL_QUOTES[0];
@@ -541,6 +581,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setGymSplits(INITIAL_GYM_SPLITS);
     setGymCompletedDays({});
     setClasses(INITIAL_CLASSES);
+    setGroceries(INITIAL_GROCERIES);
     setUserNameState('Eve');
   };
 
@@ -592,6 +633,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       addClass,
       deleteClass,
       toggleClassCompleted,
+      groceries,
+      addGroceryItem,
+      deleteGroceryItem,
+      toggleGroceryItem,
+      clearCompletedGroceries,
       waterGlassesToday,
       incrementWater,
       decrementWater,

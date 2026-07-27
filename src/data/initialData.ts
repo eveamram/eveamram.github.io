@@ -1,4 +1,4 @@
-import { TaskItem, HabitItem, ReminderItem, GoalItem, RoutineTask, GymSplitDay, ClassItem } from '../types';
+import { TaskItem, HabitItem, ReminderItem, GoalItem, RoutineTask, GymSplitDay, ClassItem, GroceryItem } from '../types';
 
 export const INITIAL_CLASSES: ClassItem[] = [
   { id: 'c1', day: 'Monday', name: 'Computer Science 101', time: '09:00 AM - 10:30 AM', location: 'Turing Hall 201', type: 'Lecture' },
@@ -7,6 +7,14 @@ export const INITIAL_CLASSES: ClassItem[] = [
   { id: 'c4', day: 'Wednesday', name: 'Computer Science 101', time: '09:00 AM - 10:30 AM', location: 'Turing Hall 201', type: 'Lecture' },
   { id: 'c5', day: 'Thursday', name: 'Psychology & Cognition', time: '02:00 PM - 03:30 PM', location: 'Humanities 115', type: 'Seminar' },
   { id: 'c6', day: 'Friday', name: 'Linear Algebra', time: '10:00 AM - 11:30 AM', location: 'Math Building 108', type: 'Lecture' }
+];
+
+export const INITIAL_GROCERIES: GroceryItem[] = [
+  { id: 'g_1', name: 'Organic Avocados & Bananas', category: 'Produce', iconName: 'Apple', completed: false, quantity: '1 bag' },
+  { id: 'g_2', name: 'Oat Milk & Greek Yogurt', category: 'Dairy & Eggs', iconName: 'Milk', completed: false, quantity: '2 cartons' },
+  { id: 'g_3', name: 'Sourdough Bread', category: 'Bakery', iconName: 'Bread', completed: false, quantity: '1 loaf' },
+  { id: 'g_4', name: 'Fresh Salmon Fillet', category: 'Pantry', iconName: 'Fish', completed: true, quantity: '1.5 lbs' },
+  { id: 'g_5', name: 'Sparkling Water (Lime)', category: 'Beverages', iconName: 'Coffee', completed: false, quantity: '12 pack' }
 ];
 
 const getTodayString = (offsetDays = 0) => {

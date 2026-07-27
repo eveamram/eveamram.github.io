@@ -7,6 +7,7 @@ import { SmartAssistant } from './components/SmartAssistant';
 import { ClassesScheduleCard } from './components/ClassesScheduleCard';
 import { DailyRoutineCard } from './components/DailyRoutineCard';
 import { GymWorkoutCard } from './components/GymWorkoutCard';
+import { GroceryListCard } from './components/GroceryListCard';
 import { TasksView } from './components/TasksView';
 import { HabitsView } from './components/HabitsView';
 import { RemindersView } from './components/RemindersView';
@@ -28,6 +29,7 @@ const AppContent: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <SmartAssistant />
                 <GymWorkoutCard />
+                <GroceryListCard />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <DailyRoutineCard />

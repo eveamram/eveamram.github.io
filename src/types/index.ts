@@ -141,3 +141,14 @@ export interface ClassItem {
   type?: string;
   completed?: boolean;
 }
+
+export type GroceryCategory = 'Produce' | 'Dairy & Eggs' | 'Pantry' | 'Bakery' | 'Frozen' | 'Beverages' | 'Personal Care' | 'Other';
+
+export interface GroceryItem {
+  id: string;
+  name: string;
+  category: GroceryCategory;
+  iconName: string;
+  completed: boolean;
+  quantity?: string;
+}
