@@ -99,6 +99,7 @@ const AppContent: React.FC = () => {
             onOpenNotifications={() => setIsNotificationsOpen(true)}
             onOpenAuth={() => setIsAuthOpen(true)}
             onOpenAdmin={() => setIsAdminOpen(true)}
+            isSidebarOpen={isSidebarOpen}
             onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
           />
           

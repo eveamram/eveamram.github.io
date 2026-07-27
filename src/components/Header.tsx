@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Sun, Moon, Bell, UserCheck, RefreshCw, ShieldCheck, Menu } from 'lucide-react';
+import { Sun, Moon, Bell, UserCheck, RefreshCw, ShieldCheck, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 interface HeaderProps {
   onOpenNotifications: () => void;
   onOpenAuth: () => void;
   onOpenAdmin: () => void;
+  isSidebarOpen: boolean;
   onToggleSidebar: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth, onOpenAdmin, onToggleSidebar }) => {
+export const Header: React.FC<HeaderProps> = ({ 
+  onOpenNotifications, 
+  onOpenAuth, 
+  onOpenAdmin, 
+  isSidebarOpen,
+  onToggleSidebar 
+}) => {
   const { 
     userName, 
     setUserName, 
@@ -50,15 +57,29 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth,
   return (
     <header className="header-container" style={{ padding: '20px 24px 12px 24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        {/* Concentric Ring Aura Brand Logo, Menu Button & Date */}
+        {/* Concentric Ring Aura Brand Logo, Open/Close Menu Button & Date */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={onToggleSidebar}
-            className="icon-btn sidebar-toggle-btn"
-            title="Toggle Side Menu"
-            style={{ width: '38px', height: '38px' }}
+            className="sidebar-toggle-btn"
+            title={isSidebarOpen ? "Close Side Menu" : "Open Side Menu"}
+            style={{
+              padding: '8px 12px',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: isSidebarOpen ? 'var(--accent-soft)' : 'var(--bg-tertiary)',
+              color: isSidebarOpen ? 'var(--accent-primary)' : 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
           >
-            <Menu size={20} />
+            {isSidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+            <span style={{ fontSize: '0.8rem' }}>{isSidebarOpen ? 'Close Menu' : 'Menu'}</span>
           </button>
 
           <div style={{
