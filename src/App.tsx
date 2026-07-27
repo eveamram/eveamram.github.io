@@ -53,6 +53,12 @@ const AppContent: React.FC = () => {
             <HabitsView />
           </div>
         );
+      case 'groceries':
+        return (
+          <div style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+            <GroceryListCard />
+          </div>
+        );
       case 'reminders':
         return (
           <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>

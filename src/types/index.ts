@@ -121,7 +121,7 @@ export interface UserProfile {
 
 export type ViewMode = 'phone' | 'computer';
 export type AppTheme = 'light' | 'dark';
-export type ActiveTab = 'home' | 'tasks' | 'habits' | 'reminders' | 'calendar';
+export type ActiveTab = 'home' | 'tasks' | 'habits' | 'groceries' | 'reminders' | 'calendar';
 
 export interface UserNotification {
   id: string;

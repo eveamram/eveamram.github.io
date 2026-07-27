@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
 import { ActiveTab } from '../types';
-import { Home, CheckSquare, Activity, Bell, Calendar } from 'lucide-react';
+import { Home, CheckSquare, Activity, ShoppingBag, Bell, Calendar } from 'lucide-react';
 
 export const Navigation: React.FC = () => {
   const { activeTab, setActiveTab } = useStore();
@@ -10,6 +10,7 @@ export const Navigation: React.FC = () => {
     { id: 'home', label: 'Today', icon: <Home size={20} /> },
     { id: 'tasks', label: 'To-Do', icon: <CheckSquare size={20} /> },
     { id: 'habits', label: 'Habits', icon: <Activity size={20} /> },
+    { id: 'groceries', label: 'Groceries', icon: <ShoppingBag size={20} /> },
     { id: 'reminders', label: 'Reminders', icon: <Bell size={20} /> },
     { id: 'calendar', label: 'Calendar', icon: <Calendar size={20} /> },
   ];
