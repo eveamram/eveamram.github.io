@@ -345,6 +345,22 @@ body {
   .ios-status-bar-mock {
     display: none !important;
   }
+
+  .sidebar-container {
+    display: none !important;
+  }
+  .bottom-nav {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .sidebar-container {
+    display: flex !important;
+  }
+  .bottom-nav {
+    display: none !important;
+  }
 }
 
 

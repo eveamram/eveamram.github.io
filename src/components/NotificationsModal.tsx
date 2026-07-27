@@ -1,7 +1,7 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { useStore } from '../store/useStore';
 import { X, Bell, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { DrawerPanel } from './common/DrawerPanel';
 
 interface NotificationsModalProps {
   isOpen: boolean;
@@ -22,101 +22,57 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, 
     }
   };
 
-  const modalContent = (
-    <div 
-      onClick={onClose} 
-      style={{ 
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        zIndex: 999999,
-        padding: '20px',
-        boxSizing: 'border-box'
-      }}
+  return (
+    <DrawerPanel
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Daily Notifications"
+      subtitle="System alerts, streaks, and intelligent reminders"
     >
-      <div 
-        className="animate-pop-in"
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'var(--bg-card)',
-          borderRadius: '28px',
-          padding: '24px',
-          width: '100%',
-          maxWidth: '440px',
-          boxShadow: 'var(--shadow-xl)',
-          border: '1px solid var(--border-color)',
-          maxHeight: '80vh',
-          overflowY: 'auto',
-          margin: 'auto',
-          alignSelf: 'center'
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            Daily Notifications
-          </h2>
-          <button className="icon-btn" onClick={onClose} style={{ cursor: 'pointer' }}>
-            <X size={18} />
-          </button>
+      {notifications.length === 0 ? (
+        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+          <Bell size={36} style={{ marginBottom: '12px', opacity: 0.5 }} />
+          <p style={{ fontSize: '0.9rem' }}>No new notifications right now. Everything is peaceful!</p>
         </div>
-
-        {notifications.length === 0 ? (
-          <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
-            <Bell size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
-            <p>No new notifications right now. Everything is peaceful!</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {notifications.map((n) => (
-              <div 
-                key={n.id}
-                style={{
-                  background: 'var(--bg-tertiary)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '14px 16px',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  border: '1px solid var(--border-color)'
-                }}
-              >
-                <div style={{ paddingTop: '2px' }}>{getIcon(n.type)}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                    <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {n.title}
-                    </h4>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                      {n.date}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                    {n.body}
-                  </p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {notifications.map((n) => (
+            <div 
+              key={n.id}
+              style={{
+                background: 'var(--bg-tertiary)',
+                borderRadius: 'var(--radius-md)',
+                padding: '14px 16px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '12px',
+                border: '1px solid var(--border-color)'
+              }}
+            >
+              <div style={{ paddingTop: '2px' }}>{getIcon(n.type)}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {n.title}
+                  </h4>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                    {n.date}
+                  </span>
                 </div>
-                <button 
-                  onClick={() => dismissNotification(n.id)}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '2px' }}
-                >
-                  <X size={14} />
-                </button>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                  {n.body}
+                </p>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+              <button 
+                onClick={() => dismissNotification(n.id)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '2px' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </DrawerPanel>
   );
-
-  return createPortal(modalContent, document.body);
 };

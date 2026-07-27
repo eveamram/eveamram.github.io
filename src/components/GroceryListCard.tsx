@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { GroceryCategory, GroceryItem } from '../types';
+import { DrawerPanel } from './common/DrawerPanel';
 import { 
   ShoppingBag, 
   Plus, 
@@ -367,129 +368,89 @@ export const GroceryListCard: React.FC = () => {
         )}
       </div>
 
-      {/* Add Grocery Modal */}
-      {isAddModalOpen && (
-        <div 
-          onClick={() => setIsAddModalOpen(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(0, 0, 0, 0.45)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999999,
-            padding: '20px',
-            boxSizing: 'border-box'
-          }}
-        >
-          <div 
-            className="animate-pop-in"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'var(--bg-card)',
-              borderRadius: 'var(--radius-xl)',
-              padding: '24px',
-              width: '100%',
-              maxWidth: '420px',
-              boxShadow: 'var(--shadow-xl)',
-              border: '1px solid var(--border-color)'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Add Grocery Item
-              </h3>
-              <button className="icon-btn" onClick={() => setIsAddModalOpen(false)}>
-                <X size={16} />
-              </button>
+      {/* Add Grocery Drawer Panel */}
+      <DrawerPanel
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Add Grocery Item"
+        subtitle="Automatic icon matching & category detection"
+      >
+        <form onSubmit={handleAddSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
+          <div className="form-group">
+            <label className="form-label">Item Name</label>
+            <input
+              type="text"
+              placeholder="e.g. Fresh Strawberries, Almond Milk..."
+              value={nameInput}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="input-text"
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="form-group" style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ flex: 1 }}>
+              <label className="form-label">Category</label>
+              <select
+                value={categoryInput}
+                onChange={(e) => setCategoryInput(e.target.value as GroceryCategory)}
+                className="input-text"
+              >
+                {categories.filter(c => c !== 'All').map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
 
-            <form onSubmit={handleAddSubmit}>
-              <div className="form-group">
-                <label className="form-label">Item Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Fresh Strawberries, Almond Milk..."
-                  value={nameInput}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  className="input-text"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div className="form-group" style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ flex: 1 }}>
-                  <label className="form-label">Category</label>
-                  <select
-                    value={categoryInput}
-                    onChange={(e) => setCategoryInput(e.target.value as GroceryCategory)}
-                    className="input-text"
-                  >
-                    {categories.filter(c => c !== 'All').map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <label className="form-label">Quantity / Notes</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 2 lbs, 1 pack"
-                    value={quantityInput}
-                    onChange={(e) => setQuantityInput(e.target.value)}
-                    className="input-text"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Choose Category Icon</label>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {iconOptions.map((opt) => (
-                    <button
-                      key={opt.name}
-                      type="button"
-                      onClick={() => setSelectedIcon(opt.name)}
-                      style={{
-                        padding: '8px',
-                        borderRadius: 'var(--radius-sm)',
-                        border: selectedIcon === opt.name ? '2px solid var(--accent-teal)' : '1px solid var(--border-color)',
-                        background: selectedIcon === opt.name ? 'var(--accent-teal-soft)' : 'var(--bg-tertiary)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                      title={opt.label}
-                    >
-                      <span style={{ fontSize: '1.25rem' }}>{getFoodIcon(opt.label, opt.name)}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsAddModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary" style={{ flex: 1 }}>
-                  Add to List
-                </button>
-              </div>
-            </form>
+            <div style={{ flex: 1 }}>
+              <label className="form-label">Quantity / Notes</label>
+              <input
+                type="text"
+                placeholder="e.g. 2 lbs, 1 pack"
+                value={quantityInput}
+                onChange={(e) => setQuantityInput(e.target.value)}
+                className="input-text"
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          <div className="form-group">
+            <label className="form-label">Choose Food Emoji / Icon</label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {iconOptions.map((opt) => (
+                <button
+                  key={opt.name}
+                  type="button"
+                  onClick={() => setSelectedIcon(opt.name)}
+                  style={{
+                    padding: '10px',
+                    borderRadius: 'var(--radius-md)',
+                    border: selectedIcon === opt.name ? '2px solid var(--accent-teal)' : '1px solid var(--border-color)',
+                    background: selectedIcon === opt.name ? 'var(--accent-teal-soft)' : 'var(--bg-tertiary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title={opt.label}
+                >
+                  <span style={{ fontSize: '1.35rem' }}>{getFoodIcon(opt.label, opt.name)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', marginTop: 'auto', paddingTop: '20px' }}>
+            <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsAddModalOpen(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" style={{ flex: 1 }}>
+              Add to List
+            </button>
+          </div>
+        </form>
+      </DrawerPanel>
     </div>
   );
 };

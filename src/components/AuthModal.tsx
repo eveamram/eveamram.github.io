@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useStore } from '../store/useStore';
 import { UserProfile } from '../types';
-import { Plus, Check, ShieldCheck, X, Pencil } from 'lucide-react';
+import { Plus, Check, ShieldCheck, Pencil } from 'lucide-react';
+import { DrawerPanel } from './common/DrawerPanel';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -63,63 +63,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  const modalContent = (
-    <div 
-      className="modal-backdrop" 
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 999999,
-        padding: '20px'
-      }}
+  return (
+    <DrawerPanel
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === 'edit' ? 'Edit Profile & Avatar' : mode === 'create' ? 'Create Account Profile' : 'Switch Profile'}
+      subtitle={mode === 'list' ? 'Select who is using Aura dashboard today' : 'Customize avatar emoji, profile name, and theme color'}
     >
-      <div 
-        className="modal-sheet animate-pop-in" 
-        onClick={(e) => e.stopPropagation()} 
-        style={{ 
-          background: 'var(--bg-card)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '24px',
-          width: '100%',
-          maxWidth: '440px',
-          boxShadow: 'var(--shadow-xl)',
-          border: '1px solid var(--border-color)',
-          maxHeight: '85vh',
-          overflowY: 'auto',
-          margin: 'auto'
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck size={20} color="var(--accent-primary)" />
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                {mode === 'edit' ? 'Edit Profile & Avatar' : mode === 'create' ? 'Create Account Profile' : 'Switch Profile'}
-              </h2>
-            </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-              {mode === 'list' 
-                ? 'Select who is using Aura dashboard today' 
-                : 'Customize your avatar emoji, profile name, and color theme'}
-            </p>
-          </div>
-
-          <button className="icon-btn" onClick={onClose} style={{ width: '32px', height: '32px' }}>
-            <X size={16} />
-          </button>
-        </div>
 
         {mode === 'list' ? (
           <div>
@@ -293,9 +243,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
           </form>
         )}
-      </div>
-    </div>
+    </DrawerPanel>
   );
-
-  return createPortal(modalContent, document.body);
 };

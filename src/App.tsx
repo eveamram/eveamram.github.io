@@ -16,6 +16,8 @@ import { NotificationsModal } from './components/NotificationsModal';
 import { AuthModal } from './components/AuthModal';
 import { AdminModal } from './components/AdminModal';
 
+import { SidebarNavigation } from './components/SidebarNavigation';
+
 const AppContent: React.FC = () => {
   const { activeTab } = useStore();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -80,15 +82,27 @@ const AppContent: React.FC = () => {
 
   return (
     <DeviceFrame>
-      <Header 
-        onOpenNotifications={() => setIsNotificationsOpen(true)}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenAdmin={() => setIsAdminOpen(true)}
-      />
-      
-      <main style={{ flex: 1, paddingBottom: '100px' }}>
-        {renderActiveView()}
-      </main>
+      <div className="layout-with-sidebar" style={{ display: 'flex', width: '100%', minHeight: '100vh' }}>
+        {/* Desktop Left Sidebar Menu */}
+        <SidebarNavigation 
+          onOpenAuth={() => setIsAuthOpen(true)}
+          onOpenAdmin={() => setIsAdminOpen(true)}
+          onOpenNotifications={() => setIsNotificationsOpen(true)}
+        />
+
+        {/* Main Content Area */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <Header 
+            onOpenNotifications={() => setIsNotificationsOpen(true)}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onOpenAdmin={() => setIsAdminOpen(true)}
+          />
+          
+          <main style={{ flex: 1, paddingBottom: '100px' }}>
+            {renderActiveView()}
+          </main>
+        </div>
+      </div>
 
       <Navigation />
 

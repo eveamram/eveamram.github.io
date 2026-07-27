@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { DayOfWeek } from '../types';
+import { DrawerPanel } from './common/DrawerPanel';
 import { 
   ShieldCheck, 
-  X, 
   Dumbbell, 
   Calendar, 
   Megaphone, 
@@ -11,7 +11,6 @@ import {
   Plus, 
   Trash2, 
   Save, 
-  Sparkles,
   CheckCircle
 } from 'lucide-react';
 
@@ -117,68 +116,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div 
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.55)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 999999,
-        padding: '20px',
-        boxSizing: 'border-box'
-      }}
+    <DrawerPanel
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Global Admin Control Panel"
+      subtitle="Changes sync live to all connected devices in real time"
+      maxWidth="540px"
     >
-      <div 
-        className="animate-pop-in"
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'var(--bg-card)',
-          borderRadius: 'var(--radius-xl)',
-          padding: '24px',
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: 'var(--shadow-xl)',
-          border: '1px solid var(--accent-teal)'
-        }}
-      >
-        {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              background: 'var(--accent-teal-soft)',
-              padding: '8px',
-              borderRadius: '50%',
-              color: 'var(--accent-teal)'
-            }}>
-              <ShieldCheck size={24} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Global Admin Control Panel
-              </h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                Changes sync live to all connected devices in real time
-              </span>
-            </div>
-          </div>
-
-          <button className="icon-btn" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
 
         {/* Success Toast Banner */}
         {successMessage && (
@@ -425,8 +369,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
             </form>
           )}
         </div>
-      </div>
-    </div>
+    </DrawerPanel>
   );
 };
 
