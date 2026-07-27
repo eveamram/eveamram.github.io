@@ -1,16 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase environment credentials
+// Supabase environment credentials from environment variables
 const env = (import.meta as any).env || {};
-const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://auralifedashboard.supabase.co';
-const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1cmFsaWZlZGFzaGJvYXJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAxNTAwMDAwMH0.mock_key';
+const SUPABASE_URL = env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || '';
 
-console.log('[Supabase Client] Initializing Supabase Connection to:', SUPABASE_URL);
+export const isBackendConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && !SUPABASE_URL.includes('auralifedashboard.supabase.co'));
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-  realtime: { params: { eventsPerSecond: 10 } }
-});
+if (!isBackendConfigured) {
+  console.warn('[Backend Status] Supabase is NOT configured. VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables are missing or set to placeholder defaults.');
+} else {
+  console.log('[Backend Status] Connecting to configured Supabase instance:', SUPABASE_URL);
+}
+
+export const supabase = createClient(
+  isBackendConfigured ? SUPABASE_URL : 'https://placeholder-unconfigured.supabase.co',
+  isBackendConfigured ? SUPABASE_ANON_KEY : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.unconfigured',
+  {
+    auth: { persistSession: false, autoRefreshToken: false },
+    realtime: { params: { eventsPerSecond: 10 } }
+  }
+);
 
 export interface ProfileItemRow {
   id: string;
@@ -24,25 +34,13 @@ export interface ProfileItemRow {
   updated_at?: string;
 }
 
-// Persistent Storage Fallback Helper (ensures zero data loss across reloads)
-function getLocalDbStore(profileId: string): ProfileItemRow[] {
-  try {
-    const raw = localStorage.getItem(`aura_db_items_${profileId}`);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return [];
-}
-
-function saveLocalDbStore(profileId: string, items: ProfileItemRow[]) {
-  try {
-    localStorage.setItem(`aura_db_items_${profileId}`, JSON.stringify(items));
-  } catch {}
-}
-
-// Helper: Fetch all profile items for active profile
+// Fetch all profile items directly from Supabase PostgreSQL database table
 export async function fetchProfileItemsFromSupabase(profileId: string): Promise<ProfileItemRow[]> {
-  console.log(`[Supabase SELECT Request] Querying table "public.profile_items" for profile_id = "${profileId}"...`);
-  
+  if (!isBackendConfigured) {
+    console.error('[Supabase Error] Cannot SELECT from database: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are missing.');
+    return [];
+  }
+
   try {
     const { data, error } = await supabase
       .from('profile_items')
@@ -50,103 +48,89 @@ export async function fetchProfileItemsFromSupabase(profileId: string): Promise<
       .eq('profile_id', profileId);
 
     if (error) {
-      console.warn('[Supabase SELECT Warning]:', error.message);
-    } else if (data && data.length > 0) {
-      console.log(`[Supabase SELECT Success]: ${data.length} rows returned from Supabase.`);
-      const remoteRows = data as ProfileItemRow[];
-      saveLocalDbStore(profileId, remoteRows);
-      return remoteRows;
+      console.error('[Supabase SELECT Failed]:', error.message);
+      return [];
     }
-  } catch (err) {
-    console.warn('[Supabase SELECT Catch Error]:', err);
-  }
 
-  const localRows = getLocalDbStore(profileId);
-  console.log(`[Database Fetch Result]: Returning ${localRows.length} rows for profile_id = "${profileId}".`);
-  return localRows;
+    return (data as ProfileItemRow[]) || [];
+  } catch (err) {
+    console.error('[Supabase SELECT Exception]:', err);
+    return [];
+  }
 }
 
-// Helper: Insert new item into public.profile_items
+// Insert new item directly into Supabase PostgreSQL database table
 export async function insertProfileItemToSupabase(item: Omit<ProfileItemRow, 'created_at' | 'updated_at'>): Promise<ProfileItemRow | null> {
-  console.log('[Supabase INSERT Request] Payload:', item);
+  if (!isBackendConfigured) {
+    console.error('[Supabase Error] Cannot INSERT into database: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are missing.');
+    return null;
+  }
 
-  const row: ProfileItemRow = {
-    ...item,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-
-  // 1. Immediately save to persistent store so reloads NEVER lose it
-  const currentLocal = getLocalDbStore(item.profile_id);
-  const updatedLocal = currentLocal.some(i => i.id === item.id)
-    ? currentLocal.map(i => i.id === item.id ? row : i)
-    : [row, ...currentLocal];
-  saveLocalDbStore(item.profile_id, updatedLocal);
-
-  // 2. Perform Supabase database insert
   try {
+    const payload = {
+      ...item,
+      updated_at: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
       .from('profile_items')
-      .insert(item)
+      .insert(payload)
       .select('*')
       .single();
 
     if (error) {
-      console.warn('[Supabase INSERT Warning]:', error.message);
-      return row;
+      console.error('[Supabase INSERT Failed]:', error.message);
+      return null;
     }
 
-    console.log('[Supabase INSERT Success]: Returned UUID =', data?.id, 'Row:', data);
     return data as ProfileItemRow;
   } catch (err) {
-    console.warn('[Supabase INSERT Catch Error]:', err);
-    return row;
+    console.error('[Supabase INSERT Exception]:', err);
+    return null;
   }
 }
 
-// Helper: Update item in public.profile_items
+// Update item directly in Supabase PostgreSQL database table
 export async function updateProfileItemInSupabase(
   id: string,
   profileId: string,
   updates: Partial<Omit<ProfileItemRow, 'id' | 'profile_id'>>
 ): Promise<boolean> {
-  console.log(`[Supabase UPDATE Request] id = "${id}", profile_id = "${profileId}":`, updates);
-
-  // Update persistent local store
-  const currentLocal = getLocalDbStore(profileId);
-  const updatedLocal = currentLocal.map(i => {
-    if (i.id === id) {
-      return { ...i, ...updates, updated_at: new Date().toISOString() };
-    }
-    return i;
-  });
-  saveLocalDbStore(profileId, updatedLocal);
+  if (!isBackendConfigured) {
+    console.error('[Supabase Error] Cannot UPDATE database: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are missing.');
+    return false;
+  }
 
   try {
+    const payload = {
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+
     const { error } = await supabase
       .from('profile_items')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(payload)
       .eq('id', id)
       .eq('profile_id', profileId);
 
     if (error) {
-      console.warn('[Supabase UPDATE Warning]:', error.message);
+      console.error('[Supabase UPDATE Failed]:', error.message);
+      return false;
     }
+
     return true;
   } catch (err) {
-    console.warn('[Supabase UPDATE Catch Error]:', err);
-    return true;
+    console.error('[Supabase UPDATE Exception]:', err);
+    return false;
   }
 }
 
-// Helper: Delete item from public.profile_items
+// Delete item directly from Supabase PostgreSQL database table
 export async function deleteProfileItemFromSupabase(id: string, profileId: string): Promise<boolean> {
-  console.log(`[Supabase DELETE Request] id = "${id}", profile_id = "${profileId}"`);
-
-  // Remove from persistent local store
-  const currentLocal = getLocalDbStore(profileId);
-  const updatedLocal = currentLocal.filter(i => i.id !== id);
-  saveLocalDbStore(profileId, updatedLocal);
+  if (!isBackendConfigured) {
+    console.error('[Supabase Error] Cannot DELETE from database: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are missing.');
+    return false;
+  }
 
   try {
     const { error } = await supabase
@@ -156,11 +140,13 @@ export async function deleteProfileItemFromSupabase(id: string, profileId: strin
       .eq('profile_id', profileId);
 
     if (error) {
-      console.warn('[Supabase DELETE Warning]:', error.message);
+      console.error('[Supabase DELETE Failed]:', error.message);
+      return false;
     }
+
     return true;
   } catch (err) {
-    console.warn('[Supabase DELETE Catch Error]:', err);
-    return true;
+    console.error('[Supabase DELETE Exception]:', err);
+    return false;
   }
 }
