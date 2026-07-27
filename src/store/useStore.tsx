@@ -386,10 +386,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       };
     }
 
+    // 3-second live cloud polling interval (syncs phone changes to computer in real-time)
+    const pollInterval = setInterval(() => {
+      if (isMounted) {
+        loadSupabaseItems();
+      }
+    }, 3000);
+
     return () => {
       isMounted = false;
       supabase.removeChannel(channel);
       if (broadcastChannel) broadcastChannel.close();
+      clearInterval(pollInterval);
     };
   }, [activeProfileId]);
 
