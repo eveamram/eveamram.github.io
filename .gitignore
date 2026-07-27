@@ -3,7 +3,8 @@
 /.pnpm
 /.yarn
 
-# next.js build output
+# build output
+/dist/
 /.next/
 /out/
 
