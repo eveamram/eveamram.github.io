@@ -3,10 +3,10 @@
   --bg-primary: #F2F4F7;
   --bg-secondary: #FFFFFF;
   --bg-tertiary: #F8F9FA;
-  --bg-card: rgba(255, 255, 255, 0.85);
-  --bg-card-hover: rgba(255, 255, 255, 0.98);
-  --bg-glass: rgba(255, 255, 255, 0.72);
-  --bg-modal: rgba(255, 255, 255, 0.95);
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #FFFFFF;
+  --bg-glass: #FFFFFF;
+  --bg-modal: #FFFFFF;
   --border-color: rgba(0, 0, 0, 0.06);
   --border-subtle: rgba(0, 0, 0, 0.03);
 
@@ -60,10 +60,10 @@
   --bg-primary: #0B0E14;
   --bg-secondary: #161B26;
   --bg-tertiary: #1E2433;
-  --bg-card: rgba(22, 27, 38, 0.78);
-  --bg-card-hover: rgba(30, 36, 51, 0.95);
-  --bg-glass: rgba(18, 23, 33, 0.78);
-  --bg-modal: rgba(22, 27, 38, 0.96);
+  --bg-card: #161B26;
+  --bg-card-hover: #1E2433;
+  --bg-glass: #161B26;
+  --bg-modal: #161B26;
   --border-color: rgba(255, 255, 255, 0.08);
   --border-subtle: rgba(255, 255, 255, 0.04);
 
