@@ -21,6 +21,8 @@ export const GymWorkoutCard: React.FC = () => {
   const workoutCategories = [
     'Rest Day',
     'Recovery Day',
+    'Abs',
+    'Abs & Core',
     'Arms',
     'Chest',
     'Back',
@@ -49,7 +51,7 @@ export const GymWorkoutCard: React.FC = () => {
     if (lower.includes('leg') || lower.includes('glute')) {
       return <Activity size={20} color="var(--accent-success)" />;
     }
-    if (lower.includes('core') || lower.includes('back')) {
+    if (lower.includes('core') || lower.includes('back') || lower.includes('ab')) {
       return <Zap size={20} color="var(--accent-warning)" />;
     }
     return <Dumbbell size={20} color="var(--accent-rose)" />;
@@ -98,7 +100,7 @@ export const GymWorkoutCard: React.FC = () => {
           </div>
           <div>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
-              {currentProfile?.name ? `${currentProfile.name}'s Workout Split` : 'Gym & Workout Split'}
+              Workout
             </h3>
           </div>
         </div>
