@@ -1,21 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useStore } from '../store/useStore';
 import { SmartAssistant } from './SmartAssistant';
 import { GymWorkoutCard } from './GymWorkoutCard';
 import { DailyRoutineCard } from './DailyRoutineCard';
 import { ClassesScheduleCard } from './ClassesScheduleCard';
-import { QuoteCard } from './QuoteCard';
+import { TasksView } from './TasksView';
 import { 
   CheckCircle2, 
   Flame, 
-  Droplet, 
+  Bell,
   Plus, 
   Search, 
   ChevronRight,
-  AlertCircle,
-  Quote,
-  Eye,
-  EyeOff
+  Calendar,
+  Clock
 } from 'lucide-react';
 
 interface HomeDashboardViewProps {
@@ -28,14 +26,9 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({ onOpenQuic
     currentProfile, 
     tasks, 
     habits, 
-    waterGlassesToday, 
-    incrementWater, 
-    decrementWater,
-    setActiveTab,
-    toggleTask
+    reminders,
+    setActiveTab
   } = useStore();
-
-  const [showWaterWidget, setShowWaterWidget] = useState(false);
 
   // Time of day greeting
   const getGreeting = () => {
@@ -54,7 +47,9 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({ onOpenQuic
   const tasksTotal = tasks.length || 1;
   const taskPercentage = Math.round((completedTasksCount / tasksTotal) * 100);
 
-  const topPriorities = tasks.filter(t => !t.completed && t.priority === 'high').slice(0, 3);
+  // Active upcoming reminder
+  const activeReminders = reminders.filter(r => !r.dismissed);
+  const nextReminder = activeReminders[0];
 
   return (
     <div style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -84,7 +79,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({ onOpenQuic
             {getGreeting()}, {currentProfile.name}
           </h1>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-            Here is your daily life overview and focus areas for today.
+            Here is your daily life overview, tasks, and routines for today.
           </p>
         </div>
 
@@ -107,7 +102,7 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({ onOpenQuic
         </div>
       </div>
 
-      {/* Today Progress Grid */}
+      {/* Today Progress & Important Reminder Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
         {/* Habit Completion Progress */}
         <div className="aura-card" style={{ marginBottom: 0, padding: '20px' }}>
@@ -151,125 +146,53 @@ export const HomeDashboardView: React.FC<HomeDashboardViewProps> = ({ onOpenQuic
           </div>
         </div>
 
-        {/* Customizable Widget: Quote or Hydration */}
-        {showWaterWidget ? (
-          <div className="aura-card" style={{ marginBottom: 0, padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
-                Daily Hydration
-              </span>
-              <button 
-                onClick={() => setShowWaterWidget(false)} 
-                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem' }}
-                title="Swap to Quote of the Day"
-              >
-                <Quote size={14} /> Quote
-              </button>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  {waterGlassesToday}
-                </span>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', marginLeft: '4px' }}>/ 8 glasses</span>
-              </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button 
-                  onClick={decrementWater}
-                  className="btn-secondary"
-                  style={{ width: '32px', height: '32px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  -
-                </button>
-                <button 
-                  onClick={incrementWater}
-                  className="btn-primary"
-                  style={{ width: '32px', height: '32px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div style={{ position: 'relative' }}>
-            <QuoteCard />
-            <button 
-              onClick={() => setShowWaterWidget(true)}
-              style={{
-                position: 'absolute',
-                top: '12px',
-                right: '130px',
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-tertiary)',
-                cursor: 'pointer',
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '3px'
-              }}
-              title="Show Hydration Tracker"
-            >
-              <Droplet size={12} color="var(--accent-primary)" /> Water
+        {/* Important Reminder Card */}
+        <div 
+          className="aura-card aura-card-interactive" 
+          onClick={() => setActiveTab('reminders')}
+          style={{ marginBottom: 0, padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Bell size={14} color="var(--accent-rose)" /> Important Reminder
+            </span>
+            <button style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}>
+              View All <ChevronRight size={12} />
             </button>
           </div>
-        )}
+
+          {nextReminder ? (
+            <div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                {nextReminder.title}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                <span className="badge-pill" style={{ background: 'var(--accent-rose-soft)', color: 'var(--accent-rose)', padding: '2px 8px', fontSize: '0.7rem' }}>
+                  {nextReminder.category}
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <Calendar size={12} /> Due: {nextReminder.dueDate}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: '0.88rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+              No upcoming urgent reminders set.
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Content Split Layout */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px', alignItems: 'start' }}>
-        {/* Left Column */}
+        {/* Left Column: Smart Assistant, Gym Workout, and To-Do List */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <SmartAssistant />
+          <TasksView />
           <GymWorkoutCard />
-
-          {/* Top Priorities Card */}
-          {topPriorities.length > 0 && (
-            <div className="aura-card" style={{ marginBottom: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <AlertCircle size={18} color="var(--accent-rose)" /> Top Priorities
-                </h3>
-                <button 
-                  onClick={() => setActiveTab('tasks')}
-                  style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}
-                >
-                  View All <ChevronRight size={14} />
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {topPriorities.map(task => (
-                  <div 
-                    key={task.id}
-                    onClick={() => toggleTask(task.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '10px 14px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--bg-tertiary)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <div className="checkbox-custom" style={{ flexShrink: 0 }} />
-                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', flex: 1 }}>
-                      {task.title}
-                    </span>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-rose)', textTransform: 'uppercase', padding: '2px 6px', borderRadius: '4px', background: 'var(--accent-rose-soft)' }}>
-                      High
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Right Column */}
+        {/* Right Column: Daily Routine & Schedule */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <DailyRoutineCard />
           <ClassesScheduleCard />
