@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Sun, Moon, Bell, UserCheck, RefreshCw } from 'lucide-react';
+import { Sun, Moon, Bell, UserCheck, RefreshCw, ShieldCheck } from 'lucide-react';
 
 interface HeaderProps {
   onOpenNotifications: () => void;
   onOpenAuth: () => void;
+  onOpenAdmin: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth, onOpenAdmin }) => {
   const { 
     userName, 
     setUserName, 
@@ -15,7 +16,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth 
     toggleTheme, 
     currentProfile,
     notifications,
-    resetAllData 
+    resetAllData,
+    globalData
   } = useStore();
 
   const [isEditingName, setIsEditingName] = useState(false);
@@ -101,6 +103,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth 
             <span style={{ fontSize: '0.7rem', opacity: 0.8, marginLeft: '4px' }}>
               • Switch Person
             </span>
+          </button>
+
+          {/* Admin Control Panel Button */}
+          <button
+            className="icon-btn"
+            onClick={onOpenAdmin}
+            title="Open Admin Control Panel"
+            style={{ width: '36px', height: '36px', color: 'var(--accent-teal)', background: 'var(--accent-teal-soft)' }}
+          >
+            <ShieldCheck size={18} />
           </button>
 
           {/* Theme Toggle */}

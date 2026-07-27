@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
+import { cloudSyncService, GlobalDataSchema } from '../services/cloudService';
 import { 
   TaskItem, 
   HabitItem, 
@@ -109,6 +110,17 @@ interface StoreState {
   dismissNotification: (id: string) => void;
   triggerConfetti: () => void;
   resetAllData: () => void;
+
+  // Admin & Real-Time Cloud Data Sync
+  isAdmin: boolean;
+  setIsAdmin: (val: boolean) => void;
+  toggleAdminMode: () => void;
+  globalData: GlobalDataSchema;
+  updateGlobalWorkoutSplits: (splits: GymSplitDay[]) => void;
+  updateGlobalRoutines: (routines: RoutineTask[]) => void;
+  updateGlobalQuotes: (quotes: { id: string; quote: string; author: string; category: string }[]) => void;
+  updateGlobalAnnouncements: (announcements: { id: string; title: string; message: string; date: string; priority: 'low' | 'medium' | 'high' }[]) => void;
+  updateGlobalSettings: (settings: { globalNotice: string; themeAccent: string; version: string }) => void;
 }
 
 const StoreContext = createContext<StoreState | undefined>(undefined);
@@ -185,6 +197,39 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedQuoteCategory, setSelectedQuoteCategory] = useState<QuoteCategory>(() => 
     getProfileStorage(activeProfileId, 'quoteCategory', 'Stoicism')
   );
+
+  // Cloud Sync & Admin Mode State
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [globalData, setGlobalData] = useState<GlobalDataSchema>(cloudSyncService.getGlobalData());
+
+  useEffect(() => {
+    const unsubscribe = cloudSyncService.subscribeToGlobalData((latest) => {
+      setGlobalData(latest);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const toggleAdminMode = () => setIsAdmin(prev => !prev);
+
+  const updateGlobalWorkoutSplits = (splits: GymSplitDay[]) => {
+    cloudSyncService.updateGlobalData(prev => ({ ...prev, workoutSplits: splits }));
+  };
+
+  const updateGlobalRoutines = (routines: RoutineTask[]) => {
+    cloudSyncService.updateGlobalData(prev => ({ ...prev, routineTemplates: routines }));
+  };
+
+  const updateGlobalQuotes = (quotes: { id: string; quote: string; author: string; category: string }[]) => {
+    cloudSyncService.updateGlobalData(prev => ({ ...prev, quotes: quotes as any }));
+  };
+
+  const updateGlobalAnnouncements = (announcements: { id: string; title: string; message: string; date: string; priority: 'low' | 'medium' | 'high' }[]) => {
+    cloudSyncService.updateGlobalData(prev => ({ ...prev, announcements }));
+  };
+
+  const updateGlobalSettings = (settings: { globalNotice: string; themeAccent: string; version: string }) => {
+    cloudSyncService.updateGlobalData(prev => ({ ...prev, appSettings: settings }));
+  };
 
   const [notifications, setNotifications] = useState<UserNotification[]>([
     {
@@ -649,7 +694,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       notifications,
       dismissNotification,
       triggerConfetti,
-      resetAllData
+      resetAllData,
+      isAdmin,
+      setIsAdmin,
+      toggleAdminMode,
+      globalData,
+      updateGlobalWorkoutSplits,
+      updateGlobalRoutines,
+      updateGlobalQuotes,
+      updateGlobalAnnouncements,
+      updateGlobalSettings
     }}>
       {children}
     </StoreContext.Provider>

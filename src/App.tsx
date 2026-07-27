@@ -14,11 +14,13 @@ import { RemindersView } from './components/RemindersView';
 import { CalendarView } from './components/CalendarView';
 import { NotificationsModal } from './components/NotificationsModal';
 import { AuthModal } from './components/AuthModal';
+import { AdminModal } from './components/AdminModal';
 
 const AppContent: React.FC = () => {
   const { activeTab } = useStore();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -81,6 +83,7 @@ const AppContent: React.FC = () => {
       <Header 
         onOpenNotifications={() => setIsNotificationsOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAdmin={() => setIsAdminOpen(true)}
       />
       
       <main style={{ flex: 1, paddingBottom: '100px' }}>
@@ -97,6 +100,11 @@ const AppContent: React.FC = () => {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
+      />
+
+      <AdminModal
+        isOpen={isAdminOpen}
+        onClose={() => setIsAdminOpen(false)}
       />
     </DeviceFrame>
   );
