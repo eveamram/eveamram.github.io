@@ -13,7 +13,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSidebarOpen,
   onToggleSidebar 
 }) => {
-  const { notifications, currentProfile } = useStore();
+  const { notifications, currentProfile, saveStatus } = useStore();
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
@@ -64,6 +64,32 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <span style={{ fontSize: '1rem' }}>{currentProfile.avatarEmoji}</span>
             <span>{currentProfile.name}</span>
+          </div>
+
+          {/* Cloud Auto-Save Status Badge */}
+          <div 
+            title={saveStatus === 'saved' ? 'All changes saved to cloud database' : saveStatus === 'saving' ? 'Saving changes...' : saveStatus === 'offline' ? 'You are currently offline' : 'Save error'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '4px 10px',
+              borderRadius: 'var(--radius-full)',
+              background: saveStatus === 'error' ? 'var(--accent-rose-soft)' : 'var(--bg-tertiary)',
+              border: '1px solid var(--border-color)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: saveStatus === 'error' ? 'var(--accent-rose)' : saveStatus === 'saving' ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <span style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: saveStatus === 'saved' ? 'var(--accent-success)' : saveStatus === 'saving' ? 'var(--accent-primary)' : saveStatus === 'offline' ? 'var(--accent-warning)' : 'var(--accent-rose)'
+            }} />
+            <span>{saveStatus === 'saved' ? 'Saved' : saveStatus === 'saving' ? 'Saving...' : saveStatus === 'offline' ? 'Offline' : 'Error'}</span>
           </div>
         </div>
 

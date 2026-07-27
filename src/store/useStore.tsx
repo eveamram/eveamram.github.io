@@ -37,6 +37,7 @@ interface StoreState {
   profiles: UserProfile[];
   currentProfile: UserProfile;
   activeProfileId: string;
+  saveStatus: 'saved' | 'saving' | 'error' | 'offline';
   switchProfile: (profileId: string) => void;
   createProfile: (name: string, avatarEmoji: string, color: string) => void;
   updateProfile: (profileId: string, name: string, avatarEmoji: string, color: string) => void;
@@ -197,9 +198,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   ]);
 
-  // Cloud Sync & Admin Mode State
+  // Cloud Save Status & Admin Mode State
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error' | 'offline'>('saved');
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [globalData, setGlobalData] = useState<GlobalDataSchema>(cloudSyncService.getGlobalData());
+
+  useEffect(() => {
+    const handleOnline = () => setSaveStatus('saved');
+    const handleOffline = () => setSaveStatus('offline');
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -927,6 +940,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       profiles,
       currentProfile,
       activeProfileId,
+      saveStatus,
       switchProfile,
       createProfile,
       updateProfile,
