@@ -131,6 +131,30 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
           </button>
         </div>
 
+        {/* Greeting Banner & Shared Profile Live Status */}
+        <div style={{
+          padding: '12px 14px',
+          borderRadius: 'var(--radius-md)',
+          background: 'var(--bg-tertiary)',
+          border: '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px'
+        }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          </span>
+          <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+            Hello, {currentProfile.name}! 👋
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-success)' }} />
+            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-success)' }}>
+              Cloud Live Syncing
+            </span>
+          </div>
+        </div>
+
         {/* Sidebar Nav Items */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {navItems.map(item => {

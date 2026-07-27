@@ -110,9 +110,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                         <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                           {p.name}
                         </h4>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          {isActive ? 'Logged In Now' : 'Tap to switch'}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--accent-teal)', fontWeight: 700 }}>
+                            Shared Cloud Profile
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
+                            • {isActive ? 'Active Now' : 'Tap to sync'}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

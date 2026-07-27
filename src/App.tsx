@@ -97,8 +97,6 @@ const AppContent: React.FC = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <Header 
             onOpenNotifications={() => setIsNotificationsOpen(true)}
-            onOpenAuth={() => setIsAuthOpen(true)}
-            onOpenAdmin={() => setIsAdminOpen(true)}
             isSidebarOpen={isSidebarOpen}
             onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
           />
