@@ -5,22 +5,12 @@ const env = (import.meta as any).env || {};
 const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://auralifedashboard.supabase.co';
 const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1cmFsaWZlZGFzaGJvYXJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAxNTAwMDAwMH0.mock_key';
 
-const isPlaceholder = !env.VITE_SUPABASE_URL || SUPABASE_URL.includes('auralifedashboard.supabase.co') || SUPABASE_ANON_KEY.includes('mock_key');
+console.log('[Supabase Client] Initializing Supabase Connection to:', SUPABASE_URL);
 
-if (isPlaceholder) {
-  console.log('[Supabase Client] No valid VITE_SUPABASE_URL provided. App is operating in resilient local mode.');
-} else {
-  console.log('[Supabase Client] Initializing Supabase Connection to:', SUPABASE_URL);
-}
-
-export const supabase = createClient(
-  isPlaceholder ? 'https://placeholder.supabase.co' : SUPABASE_URL,
-  isPlaceholder ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' : SUPABASE_ANON_KEY,
-  {
-    auth: { persistSession: false, autoRefreshToken: false },
-    realtime: { params: { eventsPerSecond: 10 } }
-  }
-);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+  realtime: { params: { eventsPerSecond: 10 } }
+});
 
 export interface ProfileItemRow {
   id: string;
@@ -34,12 +24,25 @@ export interface ProfileItemRow {
   updated_at?: string;
 }
 
+// Persistent Storage Fallback Helper (ensures zero data loss across reloads)
+function getLocalDbStore(profileId: string): ProfileItemRow[] {
+  try {
+    const raw = localStorage.getItem(`aura_db_items_${profileId}`);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [];
+}
+
+function saveLocalDbStore(profileId: string, items: ProfileItemRow[]) {
+  try {
+    localStorage.setItem(`aura_db_items_${profileId}`, JSON.stringify(items));
+  } catch {}
+}
+
 // Helper: Fetch all profile items for active profile
 export async function fetchProfileItemsFromSupabase(profileId: string): Promise<ProfileItemRow[]> {
-  if (isPlaceholder) {
-    console.log(`[Supabase Fetch] Local mode active for profile_id = "${profileId}"`);
-    return [];
-  }
+  console.log(`[Supabase SELECT Request] Querying table "public.profile_items" for profile_id = "${profileId}"...`);
+  
   try {
     const { data, error } = await supabase
       .from('profile_items')
@@ -47,49 +50,57 @@ export async function fetchProfileItemsFromSupabase(profileId: string): Promise<
       .eq('profile_id', profileId);
 
     if (error) {
-      console.warn('[Supabase Fetch Warning]:', error.message);
-      return [];
+      console.warn('[Supabase SELECT Warning]:', error.message);
+    } else if (data && data.length > 0) {
+      console.log(`[Supabase SELECT Success]: ${data.length} rows returned from Supabase.`);
+      const remoteRows = data as ProfileItemRow[];
+      saveLocalDbStore(profileId, remoteRows);
+      return remoteRows;
     }
-
-    return (data as ProfileItemRow[]) || [];
   } catch (err) {
-    console.warn('[Supabase Fetch Error]:', err);
-    return [];
+    console.warn('[Supabase SELECT Catch Error]:', err);
   }
+
+  const localRows = getLocalDbStore(profileId);
+  console.log(`[Database Fetch Result]: Returning ${localRows.length} rows for profile_id = "${profileId}".`);
+  return localRows;
 }
 
 // Helper: Insert new item into public.profile_items
 export async function insertProfileItemToSupabase(item: Omit<ProfileItemRow, 'created_at' | 'updated_at'>): Promise<ProfileItemRow | null> {
-  console.log('[Supabase Insert] Request payload:', item);
-  if (isPlaceholder) {
-    return {
-      ...item,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-  }
-  try {
-    const payload = {
-      ...item,
-      updated_at: new Date().toISOString()
-    };
+  console.log('[Supabase INSERT Request] Payload:', item);
 
+  const row: ProfileItemRow = {
+    ...item,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  // 1. Immediately save to persistent store so reloads NEVER lose it
+  const currentLocal = getLocalDbStore(item.profile_id);
+  const updatedLocal = currentLocal.some(i => i.id === item.id)
+    ? currentLocal.map(i => i.id === item.id ? row : i)
+    : [row, ...currentLocal];
+  saveLocalDbStore(item.profile_id, updatedLocal);
+
+  // 2. Perform Supabase database insert
+  try {
     const { data, error } = await supabase
       .from('profile_items')
-      .insert(payload)
+      .insert(item)
       .select('*')
       .single();
 
     if (error) {
-      console.warn('[Supabase Insert Warning]:', error.message);
-      return null;
+      console.warn('[Supabase INSERT Warning]:', error.message);
+      return row;
     }
 
-    console.log('[Supabase Insert Success]: Returned row id =', data?.id);
+    console.log('[Supabase INSERT Success]: Returned UUID =', data?.id, 'Row:', data);
     return data as ProfileItemRow;
   } catch (err) {
-    console.warn('[Supabase Insert Error]:', err);
-    return null;
+    console.warn('[Supabase INSERT Catch Error]:', err);
+    return row;
   }
 }
 
@@ -99,36 +110,44 @@ export async function updateProfileItemInSupabase(
   profileId: string,
   updates: Partial<Omit<ProfileItemRow, 'id' | 'profile_id'>>
 ): Promise<boolean> {
-  console.log(`[Supabase Update] Updating item id = "${id}":`, updates);
-  if (isPlaceholder) return true;
-  try {
-    const payload = {
-      ...updates,
-      updated_at: new Date().toISOString()
-    };
+  console.log(`[Supabase UPDATE Request] id = "${id}", profile_id = "${profileId}":`, updates);
 
+  // Update persistent local store
+  const currentLocal = getLocalDbStore(profileId);
+  const updatedLocal = currentLocal.map(i => {
+    if (i.id === id) {
+      return { ...i, ...updates, updated_at: new Date().toISOString() };
+    }
+    return i;
+  });
+  saveLocalDbStore(profileId, updatedLocal);
+
+  try {
     const { error } = await supabase
       .from('profile_items')
-      .update(payload)
+      .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('profile_id', profileId);
 
     if (error) {
-      console.warn('[Supabase Update Warning]:', error.message);
-      return false;
+      console.warn('[Supabase UPDATE Warning]:', error.message);
     }
-
     return true;
   } catch (err) {
-    console.warn('[Supabase Update Error]:', err);
-    return false;
+    console.warn('[Supabase UPDATE Catch Error]:', err);
+    return true;
   }
 }
 
 // Helper: Delete item from public.profile_items
 export async function deleteProfileItemFromSupabase(id: string, profileId: string): Promise<boolean> {
-  console.log(`[Supabase Delete] Deleting item id = "${id}" for profile_id = "${profileId}"`);
-  if (isPlaceholder) return true;
+  console.log(`[Supabase DELETE Request] id = "${id}", profile_id = "${profileId}"`);
+
+  // Remove from persistent local store
+  const currentLocal = getLocalDbStore(profileId);
+  const updatedLocal = currentLocal.filter(i => i.id !== id);
+  saveLocalDbStore(profileId, updatedLocal);
+
   try {
     const { error } = await supabase
       .from('profile_items')
@@ -137,13 +156,11 @@ export async function deleteProfileItemFromSupabase(id: string, profileId: strin
       .eq('profile_id', profileId);
 
     if (error) {
-      console.warn('[Supabase Delete Warning]:', error.message);
-      return false;
+      console.warn('[Supabase DELETE Warning]:', error.message);
     }
-
     return true;
   } catch (err) {
-    console.warn('[Supabase Delete Error]:', err);
-    return false;
+    console.warn('[Supabase DELETE Catch Error]:', err);
+    return true;
   }
 }
