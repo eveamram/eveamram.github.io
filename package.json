@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build && cp -r dist/* . && cp public/.nojekyll .",
+    "dev": "cp index.html.source index.html && vite",
+    "build": "cp index.html.source index.html && tsc && vite build && rm -rf assets && cp -r dist/* . && cp public/.nojekyll .",
     "lint": "tsc --noEmit",
     "preview": "vite preview",
     "predeploy": "npm run build",
