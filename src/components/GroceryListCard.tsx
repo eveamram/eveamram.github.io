@@ -57,19 +57,51 @@ export const GroceryListCard: React.FC = () => {
     { name: 'ShoppingBag', label: 'General' }
   ];
 
-  const renderIcon = (iconName: string, size = 18) => {
+  // Food Emoji & Icon Dictionary
+  const getFoodIcon = (name: string, iconName?: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('apple') || lower.includes('fruit') || lower.includes('berry') || lower.includes('strawberry')) return '🍎';
+    if (lower.includes('banana')) return '🍌';
+    if (lower.includes('avocado')) return '🥑';
+    if (lower.includes('milk') || lower.includes('yogurt') || lower.includes('dairy') || lower.includes('cream')) return '🥛';
+    if (lower.includes('cheese')) return '🧀';
+    if (lower.includes('egg')) return '🥚';
+    if (lower.includes('bread') || lower.includes('sourdough') || lower.includes('toast') || lower.includes('bakery')) return '🍞';
+    if (lower.includes('fish') || lower.includes('salmon') || lower.includes('tuna') || lower.includes('shrimp')) return '🐟';
+    if (lower.includes('chicken') || lower.includes('meat') || lower.includes('steak') || lower.includes('beef')) return '🥩';
+    if (lower.includes('coffee') || lower.includes('latte') || lower.includes('tea')) return '☕';
+    if (lower.includes('water') || lower.includes('juice') || lower.includes('drink') || lower.includes('soda') || lower.includes('beverage')) return '🧃';
+    if (lower.includes('wine') || lower.includes('beer')) return '🍷';
+    if (lower.includes('pizza')) return '🍕';
+    if (lower.includes('cookie') || lower.includes('cake') || lower.includes('chocolate') || lower.includes('donut') || lower.includes('snack')) return '🍪';
+    if (lower.includes('carrot') || lower.includes('veggie') || lower.includes('salad') || lower.includes('tomato')) return '🥕';
+    if (lower.includes('rice') || lower.includes('pasta') || lower.includes('noodle')) return '🍚';
+
     switch (iconName) {
-      case 'Apple': return <Apple size={size} color="var(--accent-rose)" />;
-      case 'Carrot': return <Carrot size={size} color="var(--accent-amber)" />;
-      case 'Milk': return <Milk size={size} color="var(--accent-blue)" />;
-      case 'Fish': return <Fish size={size} color="var(--accent-teal)" />;
-      case 'Coffee': return <Coffee size={size} color="var(--accent-purple)" />;
-      case 'Cake': return <Cake size={size} color="var(--accent-rose)" />;
-      case 'Package': return <Package size={size} color="var(--accent-indigo)" />;
-      case 'Flame': return <Flame size={size} color="var(--accent-amber)" />;
-      case 'Wine': return <Wine size={size} color="var(--accent-purple)" />;
-      default: return <ShoppingBag size={size} color="var(--accent-primary)" />;
+      case 'Apple': return '🍎';
+      case 'Carrot': return '🥕';
+      case 'Milk': return '🥛';
+      case 'Fish': return '🐟';
+      case 'Coffee': return '☕';
+      case 'Cake': return '🍰';
+      case 'Package': return '📦';
+      case 'Flame': return '🔥';
+      case 'Wine': return '🍷';
+      default: return '🛍️';
     }
+  };
+
+  const handleNameChange = (val: string) => {
+    setNameInput(val);
+    // Auto-detect matching category icon as user types
+    const detected = getFoodIcon(val);
+    if (detected === '🍎') setSelectedIcon('Apple');
+    else if (detected === '🥕') setSelectedIcon('Carrot');
+    else if (detected === '🥛') setSelectedIcon('Milk');
+    else if (detected === '🐟') setSelectedIcon('Fish');
+    else if (detected === '☕') setSelectedIcon('Coffee');
+    else if (detected === '🍰') setSelectedIcon('Cake');
+    else if (detected === '🍷') setSelectedIcon('Wine');
   };
 
   const filteredItems = selectedCategory === 'All' 
@@ -197,16 +229,17 @@ export const GroceryListCard: React.FC = () => {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{
-                  width: '34px',
-                  height: '34px',
+                  width: '36px',
+                  height: '36px',
                   borderRadius: 'var(--radius-sm)',
                   background: 'var(--bg-tertiary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  fontSize: '1.25rem',
                   flexShrink: 0
                 }}>
-                  {renderIcon(item.iconName)}
+                  {getFoodIcon(item.name, item.iconName)}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -214,9 +247,12 @@ export const GroceryListCard: React.FC = () => {
                     fontSize: '0.9rem',
                     fontWeight: 700,
                     color: 'var(--text-primary)',
-                    textDecoration: item.completed ? 'line-through' : 'none'
+                    textDecoration: item.completed ? 'line-through' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
                   }}>
-                    {item.name}
+                    <span>{item.name}</span>
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>
@@ -306,7 +342,7 @@ export const GroceryListCard: React.FC = () => {
                   type="text"
                   placeholder="e.g. Fresh Strawberries, Almond Milk..."
                   value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
+                  onChange={(e) => handleNameChange(e.target.value)}
                   className="input-text"
                   required
                   autoFocus
@@ -359,7 +395,7 @@ export const GroceryListCard: React.FC = () => {
                       }}
                       title={opt.label}
                     >
-                      {renderIcon(opt.name, 20)}
+                      <span style={{ fontSize: '1.25rem' }}>{getFoodIcon(opt.label, opt.name)}</span>
                     </button>
                   ))}
                 </div>
