@@ -150,7 +150,7 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-success)' }} />
             <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-success)' }}>
-              Cloud Live Syncing
+              Phone ⇄ Computer Live Sync
             </span>
           </div>
         </div>

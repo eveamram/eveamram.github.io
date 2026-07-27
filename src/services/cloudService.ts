@@ -1,7 +1,7 @@
 import { GymSplitDay, RoutineTask, ReminderItem, ClassItem, TaskItem, HabitItem, GroceryItem, QuoteItem } from '../types';
 import { INITIAL_GYM_SPLITS, INITIAL_ROUTINES, INITIAL_REMINDERS, INITIAL_TASKS, INITIAL_HABITS, INITIAL_GROCERIES, INITIAL_CLASSES } from '../data/initialData';
 import { INITIAL_QUOTES } from '../data/quotes';
-import { supabase } from './supabaseClient';
+import { supabase, fetchRemoteProfileCloud, pushRemoteProfileCloud, SharedProfilePayload } from './supabaseClient';
 
 export interface GlobalDataSchema {
   workoutSplits: GymSplitDay[];
@@ -16,12 +16,12 @@ export interface GlobalDataSchema {
   };
 }
 
-const GLOBAL_STORAGE_KEY = 'aura_cloud_global_data_v2';
-const PROFILE_CLOUD_PREFIX = 'aura_cloud_profile_v2_';
+const GLOBAL_STORAGE_KEY = 'aura_cloud_global_data_v3';
+const PROFILE_CLOUD_PREFIX = 'aura_cloud_profile_v3_';
 
 // BroadcastChannel for instant real-time sync across tabs/devices in window context
 const syncChannel = typeof window !== 'undefined' && 'BroadcastChannel' in window
-  ? new BroadcastChannel('aura_cloud_sync_channel_v2')
+  ? new BroadcastChannel('aura_cloud_sync_channel_v3')
   : null;
 
 export const INITIAL_GLOBAL_DATA: GlobalDataSchema = {
@@ -32,16 +32,16 @@ export const INITIAL_GLOBAL_DATA: GlobalDataSchema = {
     {
       id: 'ann_1',
       title: 'Welcome to Aura Dashboard',
-      message: 'Centralized shared cloud profile data is live across all devices.',
+      message: 'Centralized real-time shared profile data is live across all devices.',
       date: new Date().toISOString().split('T')[0],
       priority: 'high'
     }
   ],
   defaultReminders: INITIAL_REMINDERS,
   appSettings: {
-    globalNotice: 'Shared Cloud Profile Sync is active.',
+    globalNotice: 'Cross-Device Shared Cloud Profile Sync Active.',
     themeAccent: '#14b8a6',
-    version: '3.0.0'
+    version: '3.1.0'
   }
 };
 
@@ -51,6 +51,9 @@ class CloudSyncService {
   private profileListeners: ((profileId: string, data?: any) => void)[] = [];
   private isOnline: boolean = typeof navigator !== 'undefined' ? navigator.onLine : true;
   private onlineListeners: ((online: boolean) => void)[] = [];
+  private activeProfileId: string = 'p_eve';
+  private lastSyncedTimestamp: string = '';
+  private pollingIntervalId: any = null;
 
   constructor() {
     this.globalData = this.loadGlobalFromStorage();
@@ -91,22 +94,21 @@ class CloudSyncService {
       });
     }
 
-    // Subscribe to Supabase Realtime channel for live multi-device sync
-    try {
-      supabase.channel('public:aura_shared_profiles')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
-          if (payload.new && (payload.new as any).id) {
-            this.notifyProfileListeners((payload.new as any).id, payload.new);
-          }
-        })
-        .subscribe();
-    } catch (err) {
-      console.info('Supabase Realtime Channel fallback active:', err);
-    }
+    // High-speed cross-device real-time heartbeat polling (1.5 seconds)
+    this.startCrossDeviceRealtimeSync();
+  }
+
+  public setActiveProfile(profileId: string): void {
+    this.activeProfileId = profileId;
+    this.pullLatestFromCloud(profileId);
   }
 
   public getIsOnline(): boolean {
     return this.isOnline;
+  }
+
+  public getLastSyncedTimestamp(): string {
+    return this.lastSyncedTimestamp;
   }
 
   public subscribeToOnlineStatus(callback: (online: boolean) => void): () => void {
@@ -131,7 +133,7 @@ class CloudSyncService {
     }
   }
 
-  public saveProfileToCloud(profileId: string, profileData: any): void {
+  public async saveProfileToCloud(profileId: string, profileData: any): Promise<void> {
     try {
       localStorage.setItem(`${PROFILE_CLOUD_PREFIX}${profileId}`, JSON.stringify(profileData));
     } catch (err) {
@@ -139,6 +141,26 @@ class CloudSyncService {
     }
 
     this.broadcastProfileUpdate(profileId, profileData);
+
+    // Push to Remote Cloud Backend for Cross-Device Sync (Phone <-> Computer)
+    if (this.isOnline) {
+      const payload: SharedProfilePayload = {
+        profileId,
+        tasks: profileData.tasks || [],
+        habits: profileData.habits || [],
+        routines: profileData.routines || [],
+        reminders: profileData.reminders || [],
+        gymSplits: profileData.gymSplits || [],
+        gymCompletedDays: profileData.gymCompletedDays || {},
+        classes: profileData.classes || [],
+        groceries: profileData.groceries || [],
+        goals: profileData.goals || [],
+        updatedAt: profileData.updatedAt || new Date().toISOString()
+      };
+      
+      this.lastSyncedTimestamp = new Date().toLocaleTimeString();
+      pushRemoteProfileCloud(profileId, payload);
+    }
   }
 
   public loadProfileFromCloud(profileId: string): any | null {
@@ -151,6 +173,33 @@ class CloudSyncService {
       console.warn('Failed loading profile from storage cache:', err);
     }
     return null;
+  }
+
+  public async pullLatestFromCloud(profileId: string): Promise<void> {
+    if (!this.isOnline) return;
+
+    const remoteData = await fetchRemoteProfileCloud(profileId);
+    if (remoteData && remoteData.updatedAt) {
+      const localData = this.loadProfileFromCloud(profileId);
+      if (!localData || !localData.updatedAt || new Date(remoteData.updatedAt) > new Date(localData.updatedAt)) {
+        try {
+          localStorage.setItem(`${PROFILE_CLOUD_PREFIX}${profileId}`, JSON.stringify(remoteData));
+        } catch {}
+        this.lastSyncedTimestamp = new Date().toLocaleTimeString();
+        this.notifyProfileListeners(profileId, remoteData);
+      }
+    }
+  }
+
+  private startCrossDeviceRealtimeSync(): void {
+    if (this.pollingIntervalId) clearInterval(this.pollingIntervalId);
+
+    // Poll remote cloud every 1.5 seconds for cross-device updates
+    this.pollingIntervalId = setInterval(() => {
+      if (this.activeProfileId && this.isOnline) {
+        this.pullLatestFromCloud(this.activeProfileId);
+      }
+    }, 1500);
   }
 
   public subscribeToProfileUpdates(callback: (profileId: string, data?: any) => void): () => void {

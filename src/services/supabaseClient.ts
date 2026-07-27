@@ -18,7 +18,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 export interface CloudProfileRecord {
-  id: string; // e.g. 'eve', 'alex', 'sam'
+  id: string; // e.g. 'p_eve', 'p_alex'
   name: string;
   avatar_emoji: string;
   color: string;
@@ -26,10 +26,70 @@ export interface CloudProfileRecord {
   updated_at: string;
 }
 
-export interface CloudItemPayload {
-  id: string;
-  profile_id: string;
-  type: 'grocery' | 'task' | 'habit' | 'routine' | 'reminder' | 'class' | 'gym_split' | 'goal';
-  data: any;
-  updated_at: string;
+export interface SharedProfilePayload {
+  profileId: string;
+  tasks: any[];
+  habits: any[];
+  routines: any[];
+  reminders: any[];
+  gymSplits: any[];
+  gymCompletedDays: Record<string, boolean>;
+  classes: any[];
+  groceries: any[];
+  goals: any[];
+  updatedAt: string;
+}
+
+// Cross-Device High-Speed Cloud Transport API
+const CLOUD_SYNC_ENDPOINT = 'https://api.jsonbin.io/v3/b';
+const PUBLIC_MASTER_BIN_ID = '679693bcad19ca34f8f4381e'; // Dedicated shared cloud storage bin
+
+export async function fetchRemoteProfileCloud(profileId: string): Promise<SharedProfilePayload | null> {
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${PUBLIC_MASTER_BIN_ID}/latest`, {
+      method: 'GET',
+      headers: {
+        'X-Bin-Meta': 'false'
+      }
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data[profileId]) {
+        return data[profileId] as SharedProfilePayload;
+      }
+    }
+  } catch (err) {
+    console.warn('Remote cloud fetch info:', err);
+  }
+  return null;
+}
+
+export async function pushRemoteProfileCloud(profileId: string, payload: SharedProfilePayload): Promise<boolean> {
+  try {
+    // 1. Fetch current master dict
+    let currentData: Record<string, any> = {};
+    const fetchRes = await fetch(`https://api.jsonbin.io/v3/b/${PUBLIC_MASTER_BIN_ID}/latest`, {
+      headers: { 'X-Bin-Meta': 'false' }
+    });
+    if (fetchRes.ok) {
+      currentData = await fetchRes.json();
+    }
+
+    currentData[profileId] = payload;
+
+    // 2. Put updated dict
+    const putRes = await fetch(`https://api.jsonbin.io/v3/b/${PUBLIC_MASTER_BIN_ID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(currentData)
+    });
+
+    return putRes.ok;
+  } catch (err) {
+    console.warn('Remote cloud push info:', err);
+    return false;
+  }
 }

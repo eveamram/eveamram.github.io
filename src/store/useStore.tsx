@@ -290,6 +290,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Real-time synchronization across devices and instances for the active profile
   useEffect(() => {
+    cloudSyncService.setActiveProfile(activeProfileId);
+
     const unsubscribe = cloudSyncService.subscribeToProfileUpdates((profileId, incomingData) => {
       if (profileId === activeProfileId) {
         const cloudData = incomingData || cloudSyncService.loadProfileFromCloud(profileId);
