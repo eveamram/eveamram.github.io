@@ -26,7 +26,10 @@ export const GroceryListCard: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   
-  // Form State
+  // Quick Input State
+  const [quickInput, setQuickInput] = useState('');
+  
+  // Form State for detailed modal
   const [nameInput, setNameInput] = useState('');
   const [categoryInput, setCategoryInput] = useState<GroceryCategory>('Produce');
   const [quantityInput, setQuantityInput] = useState('');
@@ -43,6 +46,38 @@ export const GroceryListCard: React.FC = () => {
     'Personal Care',
     'Other'
   ];
+
+  const handleQuickAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickInput.trim()) return;
+
+    const val = quickInput.trim();
+    const lower = val.toLowerCase();
+
+    // Auto-detect category
+    let cat: GroceryCategory = 'Produce';
+    if (lower.includes('milk') || lower.includes('yogurt') || lower.includes('cheese') || lower.includes('butter') || lower.includes('egg')) {
+      cat = 'Dairy & Eggs';
+    } else if (lower.includes('bread') || lower.includes('toast') || lower.includes('bakery') || lower.includes('bagel')) {
+      cat = 'Bakery';
+    } else if (lower.includes('water') || lower.includes('juice') || lower.includes('coffee') || lower.includes('tea') || lower.includes('soda') || lower.includes('wine')) {
+      cat = 'Beverages';
+    } else if (lower.includes('pizza') || lower.includes('ice cream') || lower.includes('frozen')) {
+      cat = 'Frozen';
+    } else if (lower.includes('soap') || lower.includes('shampoo') || lower.includes('towel')) {
+      cat = 'Personal Care';
+    } else if (lower.includes('rice') || lower.includes('pasta') || lower.includes('oil') || lower.includes('cereal')) {
+      cat = 'Pantry';
+    }
+
+    addGroceryItem({
+      name: val,
+      category: cat,
+      iconName: 'Apple'
+    });
+
+    setQuickInput('');
+  };
 
   const iconOptions = [
     { name: 'Apple', label: 'Produce / Fruit' },
@@ -174,6 +209,48 @@ export const GroceryListCard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Clean & Simple Quick Add Input Bar */}
+      <form onSubmit={handleQuickAdd} style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+        <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+          <span style={{ position: 'absolute', left: '12px', fontSize: '1.1rem', pointerEvents: 'none' }}>
+            {getFoodIcon(quickInput)}
+          </span>
+          <input
+            type="text"
+            placeholder="Type item name (e.g. Bananas, Milk, Bread)... hit Enter"
+            value={quickInput}
+            onChange={(e) => setQuickInput(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 14px 10px 42px',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-tertiary)',
+              color: 'var(--text-primary)',
+              fontSize: '0.88rem',
+              outline: 'none',
+              transition: 'all 0.2s ease'
+            }}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={!quickInput.trim()}
+          className="btn-primary"
+          style={{
+            width: 'auto',
+            padding: '0 16px',
+            fontSize: '0.85rem',
+            fontWeight: 700,
+            borderRadius: 'var(--radius-md)',
+            opacity: quickInput.trim() ? 1 : 0.5,
+            cursor: quickInput.trim() ? 'pointer' : 'default'
+          }}
+        >
+          Add
+        </button>
+      </form>
 
       {/* Category Pills Bar */}
       <div className="scroll-hide" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '12px' }}>
