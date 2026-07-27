@@ -77,6 +77,7 @@ export const GroceryListCard: React.FC = () => {
       iconName: 'Apple'
     });
 
+    setSelectedCategory('All');
     setQuickInput('');
   };
 
@@ -157,6 +158,7 @@ export const GroceryListCard: React.FC = () => {
       iconName: selectedIcon
     });
 
+    setSelectedCategory('All');
     setNameInput('');
     setQuantityInput('');
     setIsAddModalOpen(false);

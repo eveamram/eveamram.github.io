@@ -5,19 +5,22 @@ const env = (import.meta as any).env || {};
 const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://auralifedashboard.supabase.co';
 const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1cmFsaWZlZGFzaGJvYXJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAxNTAwMDAwMH0.mock_key';
 
-console.log('[Supabase Client] Initializing Supabase Connection to:', SUPABASE_URL);
+const isPlaceholder = !env.VITE_SUPABASE_URL || SUPABASE_URL.includes('auralifedashboard.supabase.co') || SUPABASE_ANON_KEY.includes('mock_key');
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
-    },
-  },
-});
+if (isPlaceholder) {
+  console.log('[Supabase Client] No valid VITE_SUPABASE_URL provided. App is operating in resilient local mode.');
+} else {
+  console.log('[Supabase Client] Initializing Supabase Connection to:', SUPABASE_URL);
+}
+
+export const supabase = createClient(
+  isPlaceholder ? 'https://placeholder.supabase.co' : SUPABASE_URL,
+  isPlaceholder ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder' : SUPABASE_ANON_KEY,
+  {
+    auth: { persistSession: false, autoRefreshToken: false },
+    realtime: { params: { eventsPerSecond: 10 } }
+  }
+);
 
 export interface ProfileItemRow {
   id: string;
@@ -33,7 +36,10 @@ export interface ProfileItemRow {
 
 // Helper: Fetch all profile items for active profile
 export async function fetchProfileItemsFromSupabase(profileId: string): Promise<ProfileItemRow[]> {
-  console.log(`[Supabase Fetch] Fetching profile items for profile_id = "${profileId}"`);
+  if (isPlaceholder) {
+    console.log(`[Supabase Fetch] Local mode active for profile_id = "${profileId}"`);
+    return [];
+  }
   try {
     const { data, error } = await supabase
       .from('profile_items')
@@ -41,21 +47,27 @@ export async function fetchProfileItemsFromSupabase(profileId: string): Promise<
       .eq('profile_id', profileId);
 
     if (error) {
-      console.error('[Supabase Fetch Error]:', error);
+      console.warn('[Supabase Fetch Warning]:', error.message);
       return [];
     }
 
-    console.log(`[Supabase Fetch Result]: Loaded ${data?.length || 0} items for "${profileId}"`);
     return (data as ProfileItemRow[]) || [];
   } catch (err) {
-    console.error('[Supabase Fetch Catch Error]:', err);
+    console.warn('[Supabase Fetch Error]:', err);
     return [];
   }
 }
 
 // Helper: Insert new item into public.profile_items
 export async function insertProfileItemToSupabase(item: Omit<ProfileItemRow, 'created_at' | 'updated_at'>): Promise<ProfileItemRow | null> {
-  console.log('[Supabase Insert] Inserting item:', item);
+  console.log('[Supabase Insert] Request payload:', item);
+  if (isPlaceholder) {
+    return {
+      ...item,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  }
   try {
     const payload = {
       ...item,
@@ -69,14 +81,14 @@ export async function insertProfileItemToSupabase(item: Omit<ProfileItemRow, 'cr
       .single();
 
     if (error) {
-      console.error('[Supabase Insert Error]:', error);
+      console.warn('[Supabase Insert Warning]:', error.message);
       return null;
     }
 
-    console.log('[Supabase Insert Success]:', data);
+    console.log('[Supabase Insert Success]: Returned row id =', data?.id);
     return data as ProfileItemRow;
   } catch (err) {
-    console.error('[Supabase Insert Catch Error]:', err);
+    console.warn('[Supabase Insert Error]:', err);
     return null;
   }
 }
@@ -87,7 +99,8 @@ export async function updateProfileItemInSupabase(
   profileId: string,
   updates: Partial<Omit<ProfileItemRow, 'id' | 'profile_id'>>
 ): Promise<boolean> {
-  console.log(`[Supabase Update] Updating item id = "${id}" for profile_id = "${profileId}":`, updates);
+  console.log(`[Supabase Update] Updating item id = "${id}":`, updates);
+  if (isPlaceholder) return true;
   try {
     const payload = {
       ...updates,
@@ -101,14 +114,13 @@ export async function updateProfileItemInSupabase(
       .eq('profile_id', profileId);
 
     if (error) {
-      console.error('[Supabase Update Error]:', error);
+      console.warn('[Supabase Update Warning]:', error.message);
       return false;
     }
 
-    console.log(`[Supabase Update Success]: Item ${id} updated.`);
     return true;
   } catch (err) {
-    console.error('[Supabase Update Catch Error]:', err);
+    console.warn('[Supabase Update Error]:', err);
     return false;
   }
 }
@@ -116,6 +128,7 @@ export async function updateProfileItemInSupabase(
 // Helper: Delete item from public.profile_items
 export async function deleteProfileItemFromSupabase(id: string, profileId: string): Promise<boolean> {
   console.log(`[Supabase Delete] Deleting item id = "${id}" for profile_id = "${profileId}"`);
+  if (isPlaceholder) return true;
   try {
     const { error } = await supabase
       .from('profile_items')
@@ -124,14 +137,13 @@ export async function deleteProfileItemFromSupabase(id: string, profileId: strin
       .eq('profile_id', profileId);
 
     if (error) {
-      console.error('[Supabase Delete Error]:', error);
+      console.warn('[Supabase Delete Warning]:', error.message);
       return false;
     }
 
-    console.log(`[Supabase Delete Success]: Item ${id} deleted.`);
     return true;
   } catch (err) {
-    console.error('[Supabase Delete Catch Error]:', err);
+    console.warn('[Supabase Delete Error]:', err);
     return false;
   }
 }
