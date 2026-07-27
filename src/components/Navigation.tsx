@@ -10,8 +10,8 @@ export const Navigation: React.FC = () => {
     { id: 'home', label: 'Today', icon: <Home size={20} /> },
     { id: 'tasks', label: 'To-Do', icon: <CheckSquare size={20} /> },
     { id: 'habits', label: 'Habits', icon: <Activity size={20} /> },
-    { id: 'groceries', label: 'Groceries', icon: <ShoppingBag size={20} /> },
     { id: 'reminders', label: 'Reminders', icon: <Bell size={20} /> },
+    { id: 'groceries', label: 'Groceries', icon: <ShoppingBag size={20} /> },
     { id: 'calendar', label: 'Calendar', icon: <Calendar size={20} /> },
   ];
 
