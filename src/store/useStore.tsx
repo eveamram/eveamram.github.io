@@ -26,7 +26,8 @@ import {
   ViewMode,
   UserProfile,
   ClassItem,
-  GroceryItem
+  GroceryItem,
+  ToastItem
 } from '../types';
 import { INITIAL_TASKS, INITIAL_HABITS, INITIAL_REMINDERS, INITIAL_GOALS, INITIAL_ROUTINES, INITIAL_GYM_SPLITS, INITIAL_CLASSES, INITIAL_GROCERIES } from '../data/initialData';
 import { INITIAL_QUOTES } from '../data/quotes';
@@ -121,6 +122,11 @@ interface StoreState {
   triggerConfetti: () => void;
   resetAllData: () => void;
 
+  // Toast System
+  toasts: ToastItem[];
+  showToast: (message: string, type?: 'info' | 'success' | 'warning' | 'error', actionLabel?: string, onAction?: () => void) => void;
+  removeToast: (id: string) => void;
+
   // Admin Mode & Real-Time Global Settings
   isAdmin: boolean;
   setIsAdmin: (val: boolean) => void;
@@ -198,6 +204,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       type: 'assistant'
     }
   ]);
+
+  // Toast System
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const removeToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  const showToast = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info', actionLabel?: string, onAction?: () => void) => {
+    const id = generateUUID();
+    const newToast: ToastItem = { id, message, type, actionLabel, onAction };
+    setToasts(prev => [...prev.slice(-2), newToast]);
+
+    setTimeout(() => {
+      removeToast(id);
+    }, 4000);
+  };
 
   // Cloud Save Status & Admin Mode State
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error' | 'offline'>('saved');
@@ -1016,6 +1039,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       dismissNotification,
       triggerConfetti,
       resetAllData,
+      toasts,
+      showToast,
+      removeToast,
       isAdmin,
       setIsAdmin,
       toggleAdminMode: () => setIsAdmin(prev => !prev),

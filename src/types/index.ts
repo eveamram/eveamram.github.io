@@ -152,3 +152,12 @@ export interface GroceryItem {
   completed: boolean;
   quantity?: string;
 }
+
+export interface ToastItem {
+  id: string;
+  message: string;
+  type?: 'info' | 'success' | 'warning' | 'error';
+  actionLabel?: string;
+  onAction?: () => void;
+  duration?: number;
+}
