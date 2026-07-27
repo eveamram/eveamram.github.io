@@ -62,6 +62,20 @@ class CloudSyncService {
         }
       };
     }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (event) => {
+        if (event.key === GLOBAL_STORAGE_KEY) {
+          this.globalData = this.loadGlobalFromStorage();
+          this.notifyListeners();
+        } else if (event.key && event.key.startsWith('aura_dashboard_v6_')) {
+          const parts = event.key.replace('aura_dashboard_v6_', '').split('_');
+          if (parts[0]) {
+            this.notifyProfileListeners(parts[0]);
+          }
+        }
+      });
+    }
   }
 
   public broadcastProfileUpdate(profileId: string): void {
