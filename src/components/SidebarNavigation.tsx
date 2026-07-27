@@ -7,16 +7,16 @@ interface SidebarProps {
   onOpenAuth: () => void;
   onOpenAdmin: () => void;
   onOpenNotifications: () => void;
-  isOpenMobile?: boolean;
-  onCloseMobile?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export const SidebarNavigation: React.FC<SidebarProps> = ({ 
   onOpenAuth, 
   onOpenAdmin, 
   onOpenNotifications,
-  isOpenMobile = false,
-  onCloseMobile
+  isOpen,
+  onClose
 }) => {
   const { activeTab, setActiveTab, currentProfile, theme, toggleTheme, notifications } = useStore();
 
@@ -33,16 +33,23 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
 
   const handleTabClick = (tabId: ActiveTab) => {
     setActiveTab(tabId);
-    if (onCloseMobile) onCloseMobile();
+    if (window.innerWidth <= 768) {
+      onClose();
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  if (!isOpen && window.innerWidth > 768) {
+    return null;
+  }
 
   return (
     <>
       {/* Mobile Drawer Overlay Backdrop */}
-      {isOpenMobile && (
+      {isOpen && (
         <div 
-          onClick={onCloseMobile}
+          className="mobile-backdrop"
+          onClick={onClose}
           style={{
             position: 'fixed',
             top: 0,
@@ -52,14 +59,13 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
             backgroundColor: 'rgba(0, 0, 0, 0.45)',
             backdropFilter: 'blur(6px)',
             WebkitBackdropFilter: 'blur(6px)',
-            zIndex: 99999,
-            display: 'block'
+            zIndex: 99999
           }}
         />
       )}
 
       <aside
-        className={`sidebar-container ${isOpenMobile ? 'mobile-open' : ''}`}
+        className={`sidebar-container ${isOpen ? 'mobile-open' : ''}`}
         style={{
           width: '260px',
           height: '100vh',
@@ -77,7 +83,7 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
       >
       {/* Top Section: Brand & Nav Links */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {/* Brand Logo Header & Mobile Close */}
+        {/* Brand Logo Header & Close Button */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
@@ -106,25 +112,23 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {isOpenMobile && onCloseMobile && (
-            <button
-              onClick={onCloseMobile}
-              style={{
-                background: 'var(--bg-tertiary)',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                padding: '6px',
-                borderRadius: 'var(--radius-sm)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              title="Close Menu"
-            >
-              <X size={20} />
-            </button>
-          )}
+          <button
+            onClick={onClose}
+            style={{
+              background: 'var(--bg-tertiary)',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title="Close Side Menu"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Sidebar Nav Items */}

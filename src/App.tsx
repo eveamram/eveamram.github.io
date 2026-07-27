@@ -23,7 +23,7 @@ const AppContent: React.FC = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => typeof window !== 'undefined' ? window.innerWidth > 768 : true);
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -84,13 +84,13 @@ const AppContent: React.FC = () => {
   return (
     <DeviceFrame>
       <div className="layout-with-sidebar" style={{ display: 'flex', width: '100%', minHeight: '100vh' }}>
-        {/* Left Sidebar Menu (Desktop & Mobile Drawer) */}
+        {/* Collapsible Left Sidebar Menu */}
         <SidebarNavigation 
           onOpenAuth={() => setIsAuthOpen(true)}
           onOpenAdmin={() => setIsAdminOpen(true)}
           onOpenNotifications={() => setIsNotificationsOpen(true)}
-          isOpenMobile={isMobileSidebarOpen}
-          onCloseMobile={() => setIsMobileSidebarOpen(false)}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
         />
 
         {/* Main Content Area */}
@@ -99,7 +99,7 @@ const AppContent: React.FC = () => {
             onOpenNotifications={() => setIsNotificationsOpen(true)}
             onOpenAuth={() => setIsAuthOpen(true)}
             onOpenAdmin={() => setIsAdminOpen(true)}
-            onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+            onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
           />
           
           <main style={{ flex: 1, paddingBottom: '40px' }}>

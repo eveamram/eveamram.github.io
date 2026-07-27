@@ -6,10 +6,10 @@ interface HeaderProps {
   onOpenNotifications: () => void;
   onOpenAuth: () => void;
   onOpenAdmin: () => void;
-  onOpenMobileSidebar?: () => void;
+  onToggleSidebar: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth, onOpenAdmin, onOpenMobileSidebar }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth, onOpenAdmin, onToggleSidebar }) => {
   const { 
     userName, 
     setUserName, 
@@ -50,18 +50,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth,
   return (
     <header className="header-container" style={{ padding: '20px 24px 12px 24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        {/* Concentric Ring Aura Brand Logo & Date */}
+        {/* Concentric Ring Aura Brand Logo, Menu Button & Date */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {onOpenMobileSidebar && (
-            <button
-              onClick={onOpenMobileSidebar}
-              className="icon-btn mobile-menu-btn"
-              title="Open Sidebar Navigation"
-              style={{ width: '38px', height: '38px' }}
-            >
-              <Menu size={20} />
-            </button>
-          )}
+          <button
+            onClick={onToggleSidebar}
+            className="icon-btn sidebar-toggle-btn"
+            title="Toggle Side Menu"
+            style={{ width: '38px', height: '38px' }}
+          >
+            <Menu size={20} />
+          </button>
 
           <div style={{
             width: '38px',
