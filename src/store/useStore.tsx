@@ -29,6 +29,7 @@ interface StoreState {
   currentProfile: UserProfile;
   switchProfile: (profileId: string) => void;
   createProfile: (name: string, avatarEmoji: string, color: string) => void;
+  updateProfile: (profileId: string, name: string, avatarEmoji: string, color: string) => void;
   theme: AppTheme;
   toggleTheme: () => void;
   activeTab: ActiveTab;
@@ -240,6 +241,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     switchProfile(newProfile.id);
   };
 
+  const updateProfile = (profileId: string, name: string, avatarEmoji: string, color: string) => {
+    setProfiles(prev => prev.map(p => {
+      if (p.id === profileId) {
+        return { ...p, name, avatarEmoji, color };
+      }
+      return p;
+    }));
+    if (activeProfileId === profileId) {
+      setUserNameState(name);
+    }
+  };
+
   const triggerConfetti = () => {
     try {
       confetti({
@@ -282,7 +295,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     triggerConfetti();
   };
 
-  const setUserName = (name: string) => setUserNameState(name);
+  const setUserName = (name: string) => {
+    setUserNameState(name);
+    setProfiles(prev => prev.map(p => p.id === activeProfileId ? { ...p, name } : p));
+  };
   const toggleTheme = () => setThemeState(prev => prev === 'light' ? 'dark' : 'light');
   const toggleDeviceFrame = () => {
     setIsDeviceFrame(prev => {
@@ -536,6 +552,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       currentProfile,
       switchProfile,
       createProfile,
+      updateProfile,
       theme,
       toggleTheme,
       activeTab,
