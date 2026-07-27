@@ -79,32 +79,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth,
 
         {/* Header Right Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* User Profile / Switch Account Button */}
-          <button
-            onClick={onOpenAuth}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-full)',
-              background: 'var(--accent-soft)',
-              border: '1px solid var(--accent-primary)',
-              color: 'var(--accent-primary)',
-              fontSize: '0.85rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            title="Click to Log In or Switch Account Profile"
-          >
-            <span style={{ fontSize: '1rem' }}>{currentProfile?.avatarEmoji || '✨'}</span>
-            <span>{currentProfile?.name || userName}</span>
-            <span style={{ fontSize: '0.7rem', opacity: 0.8, marginLeft: '4px' }}>
-              • Switch Person
-            </span>
-          </button>
-
           {/* Admin Control Panel Button */}
           <button
             className="icon-btn"
@@ -162,35 +136,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth,
 
       {/* Greeting Banner */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-        {isEditingName ? (
-          <form onSubmit={handleNameSubmit} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <input
-              type="text"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              autoFocus
-              className="input-text"
-              style={{ fontSize: '1.5rem', fontWeight: 800, padding: '4px 8px' }}
-            />
-            <button type="submit" className="icon-btn" style={{ width: '32px', height: '32px' }}>
-              <UserCheck size={16} />
-            </button>
-          </form>
-        ) : (
-          <h1 
-            onClick={() => setIsEditingName(true)}
-            style={{ 
-              fontSize: '1.75rem', 
-              fontWeight: 800, 
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.5px',
-              cursor: 'pointer'
-            }}
-            title="Click to edit name"
-          >
-            {getGreeting()}, <span style={{ color: 'var(--accent-primary)' }}>{userName}</span>
-          </h1>
-        )}
+        <h1 
+          style={{ 
+            fontSize: '1.75rem', 
+            fontWeight: 800, 
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.5px'
+          }}
+        >
+          {getGreeting()}
+        </h1>
       </div>
     </header>
   );
