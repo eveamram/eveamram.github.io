@@ -152,7 +152,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const currentProfile = profiles.find(p => p.id === activeProfileId) || profiles[0] || DEFAULT_PROFILES[0];
   const [userName, setUserNameState] = useState<string>(currentProfile.name);
 
-  // Client interface preferences (localStorage acceptable for non-shared UI settings)
+  // Harmless client interface preferences (kept in localStorage)
   const [theme, setThemeState] = useState<AppTheme>(() => {
     try {
       return (localStorage.getItem('aura_pref_theme') as AppTheme) || 'light';
@@ -164,17 +164,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [viewMode, setViewModeState] = useState<ViewMode>('phone');
   const [isDeviceFrame, setIsDeviceFrame] = useState<boolean>(true);
 
-  // Profile-bound shared state arrays (Source of Truth = Supabase public.profile_items)
-  const [goals, setGoals] = useState<GoalItem[]>(INITIAL_GOALS);
-  const [todaysMainGoalId, setTodaysMainGoalId] = useState<string>(INITIAL_GOALS[0]?.id || 'g1');
-  const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
-  const [habits, setHabits] = useState<HabitItem[]>(INITIAL_HABITS);
-  const [routines, setRoutines] = useState<RoutineTask[]>(INITIAL_ROUTINES);
-  const [reminders, setReminders] = useState<ReminderItem[]>(INITIAL_REMINDERS);
-  const [gymSplits, setGymSplits] = useState<GymSplitDay[]>(INITIAL_GYM_SPLITS);
+  // Shared Profile State Arrays (Single Source of Truth = Supabase public.profile_items)
+  // CRITICAL: Initialized with EMPTY arrays [] so stale mock data is NEVER used or fallback-merged!
+  const [goals, setGoals] = useState<GoalItem[]>([]);
+  const [todaysMainGoalId, setTodaysMainGoalId] = useState<string>('g1');
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [habits, setHabits] = useState<HabitItem[]>([]);
+  const [routines, setRoutines] = useState<RoutineTask[]>([]);
+  const [reminders, setReminders] = useState<ReminderItem[]>([]);
+  const [gymSplits, setGymSplits] = useState<GymSplitDay[]>([]);
   const [gymCompletedDays, setGymCompletedDays] = useState<Record<string, boolean>>({});
-  const [classes, setClasses] = useState<ClassItem[]>(INITIAL_CLASSES);
-  const [groceries, setGroceries] = useState<GroceryItem[]>(INITIAL_GROCERIES);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [groceries, setGroceries] = useState<GroceryItem[]>([]);
   
   const [waterGlassesToday, setWaterGlassesToday] = useState<number>(5);
   const [todayMood, setTodayMoodState] = useState<MoodType | null>('Energized ⚡');
@@ -184,7 +185,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     {
       id: 'n1',
       title: `Welcome ${currentProfile.name}!`,
-      body: 'Supabase real-time shared database is connected.',
+      body: 'Supabase real-time shared database connected.',
       date: 'Just Now',
       read: false,
       type: 'assistant'
@@ -205,21 +206,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Main Supabase public.profile_items Initial Fetch & Realtime Channel Subscription
   useEffect(() => {
     let isMounted = true;
-    console.log(`[Supabase Realtime Sync] Connecting for active profile: "${activeProfileId}"`);
+    console.log(`[Supabase Realtime Sync] Establishing connection for active profile: "${activeProfileId}"`);
 
     async function loadSupabaseItems() {
+      console.log(`[Supabase Fetch] Querying DB for profile_id = "${activeProfileId}"`);
       const rows = await fetchProfileItemsFromSupabase(activeProfileId);
       if (!isMounted) return;
 
-      if (rows && rows.length > 0) {
-        const loadedGroceries: GroceryItem[] = [];
-        const loadedTasks: TaskItem[] = [];
-        const loadedHabits: HabitItem[] = [];
-        const loadedRoutines: RoutineTask[] = [];
-        const loadedReminders: ReminderItem[] = [];
-        const loadedClasses: ClassItem[] = [];
-        const loadedGoals: GoalItem[] = [];
+      const loadedGroceries: GroceryItem[] = [];
+      const loadedTasks: TaskItem[] = [];
+      const loadedHabits: HabitItem[] = [];
+      const loadedRoutines: RoutineTask[] = [];
+      const loadedReminders: ReminderItem[] = [];
+      const loadedClasses: ClassItem[] = [];
+      const loadedGoals: GoalItem[] = [];
 
+      if (rows && rows.length > 0) {
         rows.forEach(r => {
           if (r.item_type === 'grocery') {
             loadedGroceries.push({
@@ -288,15 +290,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             });
           }
         });
-
-        if (loadedGroceries.length > 0) setGroceries(loadedGroceries);
-        if (loadedTasks.length > 0) setTasks(loadedTasks);
-        if (loadedHabits.length > 0) setHabits(loadedHabits);
-        if (loadedRoutines.length > 0) setRoutines(loadedRoutines);
-        if (loadedReminders.length > 0) setReminders(loadedReminders);
-        if (loadedClasses.length > 0) setClasses(loadedClasses);
-        if (loadedGoals.length > 0) setGoals(loadedGoals);
       }
+
+      // CRITICAL RULE: Unconditional Replacement!
+      // Database response is the authoritative source of truth.
+      // We NEVER merge with previous local state or re-seed deleted items.
+      console.log(`[Supabase Load Replacement] Authoritative DB response loaded for "${activeProfileId}": ${loadedGroceries.length} groceries, ${loadedTasks.length} tasks, ${loadedHabits.length} habits, ${loadedRoutines.length} routines, ${loadedReminders.length} reminders, ${loadedClasses.length} classes, ${loadedGoals.length} goals.`);
+
+      setGroceries(loadedGroceries);
+      setTasks(loadedTasks);
+      setHabits(loadedHabits);
+      setRoutines(loadedRoutines);
+      setReminders(loadedReminders);
+      setClasses(loadedClasses);
+      setGoals(loadedGoals);
     }
 
     loadSupabaseItems();
@@ -312,6 +319,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const { eventType, new: newRow, old: oldRow } = payload as any;
 
           if (eventType === 'INSERT' && newRow) {
+            console.log(`[Supabase Realtime INSERT]: item_type = "${newRow.item_type}", id = "${newRow.id}"`);
             if (newRow.item_type === 'grocery') {
               const item: GroceryItem = { id: newRow.id, name: newRow.title, category: newRow.category || 'Other', iconName: newRow.metadata?.iconName || 'ShoppingBag', completed: newRow.completed, quantity: newRow.metadata?.quantity || '1' };
               setGroceries(prev => prev.some(g => g.id === newRow.id) ? prev : [item, ...prev]);
@@ -332,6 +340,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               setClasses(prev => prev.some(c => c.id === newRow.id) ? prev : [item, ...prev]);
             }
           } else if (eventType === 'UPDATE' && newRow) {
+            console.log(`[Supabase Realtime UPDATE]: item_type = "${newRow.item_type}", id = "${newRow.id}"`);
             if (newRow.item_type === 'grocery') {
               setGroceries(prev => prev.map(g => g.id === newRow.id ? { ...g, name: newRow.title, completed: newRow.completed, category: newRow.category || g.category, quantity: newRow.metadata?.quantity || g.quantity } : g));
             } else if (newRow.item_type === 'task') {
@@ -347,6 +356,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
           } else if (eventType === 'DELETE' && oldRow) {
             const targetId = oldRow.id;
+            console.log(`[Supabase Realtime DELETE]: Removing id "${targetId}" from local UI state (NO DB WRITE initiated).`);
             setGroceries(prev => prev.filter(g => g.id !== targetId));
             setTasks(prev => prev.filter(t => t.id !== targetId));
             setHabits(prev => prev.filter(h => h.id !== targetId));
@@ -363,7 +373,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     return () => {
       isMounted = false;
-      console.log(`[Supabase Realtime Sync] Unsubscribing channel for profile: "${activeProfileId}"`);
+      console.log(`[Supabase Realtime Subscription Cleanup] Unsubscribing channel for profile: "${activeProfileId}"`);
       supabase.removeChannel(channel);
     };
   }, [activeProfileId]);
@@ -530,6 +540,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteTask = async (id: string) => {
+    console.log(`[User Action DELETE Task]: id = "${id}"`);
     setTasks(prev => prev.filter(t => t.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
@@ -578,6 +589,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteHabit = async (id: string) => {
+    console.log(`[User Action DELETE Habit]: id = "${id}"`);
     setHabits(prev => prev.filter(h => h.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
@@ -624,12 +636,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteRoutineItem = async (id: string) => {
+    console.log(`[User Action DELETE Routine]: id = "${id}"`);
     setRoutines(prev => prev.filter(r => r.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
 
   // Reminder functions
   const dismissReminder = async (id: string) => {
+    console.log(`[User Action Dismiss/Delete Reminder]: id = "${id}"`);
     setReminders(prev => prev.filter(r => r.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
@@ -735,6 +749,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteClass = async (id: string) => {
+    console.log(`[User Action DELETE Class]: id = "${id}"`);
     setClasses(prev => prev.filter(c => c.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
@@ -758,6 +773,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id,
       completed: false
     };
+    console.log(`[User Action ADD Grocery]: name = "${itemData.name}", id = "${id}"`);
     setGroceries(prev => [newItem, ...prev]);
 
     await insertProfileItemToSupabase({
@@ -772,6 +788,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteGroceryItem = async (id: string) => {
+    console.log(`[User Action DELETE Grocery]: id = "${id}"`);
     setGroceries(prev => prev.filter(g => g.id !== id));
     await deleteProfileItemFromSupabase(id, activeProfileId);
   };
@@ -782,6 +799,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const nextComp = !target.completed;
     if (nextComp) triggerConfetti();
 
+    console.log(`[User Action TOGGLE Grocery]: id = "${id}", completed = ${nextComp}`);
     setGroceries(prev => prev.map(g => g.id === id ? { ...g, completed: nextComp } : g));
 
     await updateProfileItemInSupabase(id, activeProfileId, { completed: nextComp });
@@ -789,6 +807,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const clearCompletedGroceries = async () => {
     const toDelete = groceries.filter(g => g.completed);
+    console.log(`[User Action CLEAR COMPLETED Groceries]: deleting ${toDelete.length} items.`);
     setGroceries(prev => prev.filter(g => !g.completed));
 
     for (const g of toDelete) {
@@ -805,15 +824,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const resetAllData = () => {
-    setGoals(INITIAL_GOALS);
-    setTasks(INITIAL_TASKS);
-    setHabits(INITIAL_HABITS);
-    setRoutines(INITIAL_ROUTINES);
-    setReminders(INITIAL_REMINDERS);
-    setGymSplits(INITIAL_GYM_SPLITS);
+    console.log('[Store Reset] Clearing local state arrays to empty.');
+    setGoals([]);
+    setTasks([]);
+    setHabits([]);
+    setRoutines([]);
+    setReminders([]);
+    setGymSplits([]);
     setGymCompletedDays({});
-    setClasses(INITIAL_CLASSES);
-    setGroceries(INITIAL_GROCERIES);
+    setClasses([]);
+    setGroceries([]);
     setUserNameState('Eve');
   };
 
