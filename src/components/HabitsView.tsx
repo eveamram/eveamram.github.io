@@ -14,11 +14,12 @@ import {
   Activity, 
   BedDouble, 
   Footprints, 
-  Sparkles 
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 
 export const HabitsView: React.FC = () => {
-  const { habits, toggleHabitToday, addHabit } = useStore();
+  const { habits, toggleHabitToday, addHabit, deleteHabit } = useStore();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newIcon, setNewIcon] = useState('Flame');
@@ -147,13 +148,40 @@ export const HabitsView: React.FC = () => {
               </div>
             </div>
 
-            {/* 1-Tap Toggle Circle */}
-            <div style={{ cursor: 'pointer' }}>
-              {h.completedToday ? (
-                <CheckCircle2 size={26} color="var(--accent-success)" fill="var(--accent-success-soft)" />
-              ) : (
-                <Circle size={26} color="var(--text-muted)" />
-              )}
+            {/* Action Buttons: Delete & 1-Tap Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteHabit(h.id);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-tertiary)',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: 'var(--radius-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  opacity: 0.7
+                }}
+                aria-label="Delete habit"
+                title="Delete habit"
+              >
+                <Trash2 size={18} color="var(--accent-rose)" />
+              </button>
+
+              <div style={{ cursor: 'pointer' }}>
+                {h.completedToday ? (
+                  <CheckCircle2 size={26} color="var(--accent-success)" fill="var(--accent-success-soft)" />
+                ) : (
+                  <Circle size={26} color="var(--text-muted)" />
+                )}
+              </div>
             </div>
           </div>
         ))}

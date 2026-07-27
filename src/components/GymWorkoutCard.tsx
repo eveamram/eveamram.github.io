@@ -5,7 +5,7 @@ import { Dumbbell, Pencil, Check, X, Plus } from 'lucide-react';
 import { DayOfWeek } from '../types';
 
 export const GymWorkoutCard: React.FC = () => {
-  const { gymSplits, updateGymSplitFocusTitle, triggerConfetti } = useStore();
+  const { gymSplits, gymCompletedDays, toggleGymWorkoutCompleted, updateGymSplitFocusTitle, triggerConfetti } = useStore();
 
   const daysOfWeek: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
@@ -17,12 +17,6 @@ export const GymWorkoutCard: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCustomInputOpen, setIsCustomInputOpen] = useState(false);
   const [customInputText, setCustomInputText] = useState('');
-
-  // Workout completion tracking state
-  const [completedDays, setCompletedDays] = useState<Record<string, boolean>>(() => {
-    const saved = localStorage.getItem('aura_dashboard_completed_workouts_v1');
-    return saved ? JSON.parse(saved) : {};
-  });
 
   const workoutCategories = [
     'Rest Day',
@@ -42,17 +36,11 @@ export const GymWorkoutCard: React.FC = () => {
 
   const currentSplit = gymSplits.find(s => s.day === selectedDay) || { day: selectedDay, focusTitle: 'Rest Day', exercises: [] };
   const currentWorkoutType = currentSplit.focusTitle || 'Rest Day';
-  const isCompleted = !!completedDays[selectedDay];
+  const isCompleted = !!gymCompletedDays[selectedDay];
 
   const toggleWorkoutCompleted = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    const nextState = !isCompleted;
-    const updated = { ...completedDays, [selectedDay]: nextState };
-    setCompletedDays(updated);
-    localStorage.setItem('aura_dashboard_completed_workouts_v1', JSON.stringify(updated));
-    if (nextState) {
-      triggerConfetti();
-    }
+    toggleGymWorkoutCompleted(selectedDay);
   };
 
   const handleSelectCategory = (category: string) => {
@@ -126,7 +114,7 @@ export const GymWorkoutCard: React.FC = () => {
         {daysOfWeek.map((day) => {
           const isSelected = selectedDay === day;
           const isToday = todayDayName === day;
-          const isDayDone = !!completedDays[day];
+          const isDayDone = !!gymCompletedDays[day];
           const shortName = day.substring(0, 3);
 
           return (

@@ -23,61 +23,38 @@ const INITIAL_CLASSES: ClassItem[] = [
 ];
 
 export const ClassesScheduleCard: React.FC = () => {
-  const { triggerConfetti } = useStore();
+  const { classes, addClass, deleteClass, toggleClassCompleted } = useStore();
   const days: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
   const todayIndex = new Date().getDay(); // 0 is Sun, 1 is Mon...
   const todayDayName: DayOfWeek = days[todayIndex === 0 ? 6 : todayIndex - 1];
 
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(todayDayName);
-  const [classList, setClassList] = useState<ClassItem[]>(() => {
-    const saved = localStorage.getItem('aura_dashboard_classes_v1');
-    return saved ? JSON.parse(saved) : INITIAL_CLASSES;
-  });
-
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newClassName, setNewClassName] = useState('');
   const [newClassTime, setNewClassTime] = useState('');
   const [newClassLocation, setNewClassLocation] = useState('');
   const [newClassType, setNewClassType] = useState('Lecture');
 
-  const saveClasses = (newList: ClassItem[]) => {
-    setClassList(newList);
-    localStorage.setItem('aura_dashboard_classes_v1', JSON.stringify(newList));
-  };
-
-  const handleToggleClassCompleted = (id: string) => {
-    const updated = classList.map(c => c.id === id ? { ...c, completed: !c.completed } : c);
-    saveClasses(updated);
-    triggerConfetti();
-  };
-
-  const handleDeleteClass = (id: string) => {
-    const updated = classList.filter(c => c.id !== id);
-    saveClasses(updated);
-  };
-
   const handleAddClass = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClassName.trim()) return;
 
-    const newClass: ClassItem = {
-      id: 'c_' + Date.now(),
+    addClass({
       day: selectedDay,
       name: newClassName.trim(),
       time: newClassTime.trim() || '10:00 AM - 11:30 AM',
       location: newClassLocation.trim() || 'Main Campus',
       type: newClassType
-    };
+    });
 
-    saveClasses([...classList, newClass]);
     setNewClassName('');
     setNewClassTime('');
     setNewClassLocation('');
     setIsAddModalOpen(false);
   };
 
-  const dayClasses = classList.filter(c => c.day === selectedDay);
+  const dayClasses = classes.filter(c => c.day === selectedDay);
 
   return (
     <div className="aura-card">
@@ -117,7 +94,7 @@ export const ClassesScheduleCard: React.FC = () => {
         {days.map((day) => {
           const isSelected = selectedDay === day;
           const isToday = day === todayDayName;
-          const count = classList.filter(c => c.day === day).length;
+          const count = classes.filter(c => c.day === day).length;
 
           return (
             <button
@@ -186,7 +163,7 @@ export const ClassesScheduleCard: React.FC = () => {
               }}
             >
               <div 
-                onClick={() => handleToggleClassCompleted(item.id)}
+                onClick={() => toggleClassCompleted(item.id)}
                 style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', flex: 1 }}
               >
                 <div style={{ paddingTop: '2px' }}>
@@ -223,7 +200,7 @@ export const ClassesScheduleCard: React.FC = () => {
                   </span>
                 )}
                 <button
-                  onClick={() => handleDeleteClass(item.id)}
+                  onClick={() => deleteClass(item.id)}
                   style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
                   title="Remove class"
                 >

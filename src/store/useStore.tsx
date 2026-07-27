@@ -16,9 +16,10 @@ import {
   ExerciseItem,
   MoodType,
   ViewMode,
-  UserProfile
+  UserProfile,
+  ClassItem
 } from '../types';
-import { INITIAL_TASKS, INITIAL_HABITS, INITIAL_REMINDERS, INITIAL_GOALS, INITIAL_ROUTINES, INITIAL_GYM_SPLITS } from '../data/initialData';
+import { INITIAL_TASKS, INITIAL_HABITS, INITIAL_REMINDERS, INITIAL_GOALS, INITIAL_ROUTINES, INITIAL_GYM_SPLITS, INITIAL_CLASSES } from '../data/initialData';
 import { INITIAL_QUOTES } from '../data/quotes';
 
 interface StoreState {
@@ -55,6 +56,7 @@ interface StoreState {
   habits: HabitItem[];
   toggleHabitToday: (id: string) => void;
   addHabit: (habit: Omit<HabitItem, 'id' | 'streak' | 'bestStreak' | 'completedToday'>) => void;
+  deleteHabit: (id: string) => void;
 
   // Routines
   routines: RoutineTask[];
@@ -69,9 +71,17 @@ interface StoreState {
 
   // Gym Workout Splits
   gymSplits: GymSplitDay[];
+  gymCompletedDays: Record<string, boolean>;
+  toggleGymWorkoutCompleted: (day: DayOfWeek) => void;
   toggleExerciseToday: (exerciseId: string) => void;
   addExerciseToDay: (day: DayOfWeek, name: string, setsReps: string) => void;
   updateGymSplitFocusTitle: (day: DayOfWeek, title: string) => void;
+
+  // Classes Schedule
+  classes: ClassItem[];
+  addClass: (item: Omit<ClassItem, 'id'>) => void;
+  deleteClass: (id: string) => void;
+  toggleClassCompleted: (id: string) => void;
 
   // Hydration & Mood
   waterGlassesToday: number;
@@ -156,6 +166,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [routines, setRoutines] = useState<RoutineTask[]>(() => getProfileStorage(activeProfileId, 'routines', INITIAL_ROUTINES));
   const [reminders, setReminders] = useState<ReminderItem[]>(() => getProfileStorage(activeProfileId, 'reminders', INITIAL_REMINDERS));
   const [gymSplits, setGymSplits] = useState<GymSplitDay[]>(() => sanitizeGymSplits(getProfileStorage(activeProfileId, 'gymSplits', INITIAL_GYM_SPLITS)));
+  const [gymCompletedDays, setGymCompletedDays] = useState<Record<string, boolean>>(() => getProfileStorage(activeProfileId, 'gymCompletedDays', {}));
+  const [classes, setClasses] = useState<ClassItem[]>(() => getProfileStorage(activeProfileId, 'classes', INITIAL_CLASSES));
   
   const [waterGlassesToday, setWaterGlassesToday] = useState<number>(() => getProfileStorage(activeProfileId, 'waterGlasses', 5));
   const [todayMood, setTodayMoodState] = useState<MoodType | null>(() => getProfileStorage(activeProfileId, 'todayMood', 'Energized ⚡'));
@@ -194,6 +206,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_routines`, JSON.stringify(routines)); }, [routines, activeProfileId]);
   useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_reminders`, JSON.stringify(reminders)); }, [reminders, activeProfileId]);
   useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymSplits`, JSON.stringify(gymSplits)); }, [gymSplits, activeProfileId]);
+  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymCompletedDays`, JSON.stringify(gymCompletedDays)); }, [gymCompletedDays, activeProfileId]);
+  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_classes`, JSON.stringify(classes)); }, [classes, activeProfileId]);
 
   const switchProfile = (profileId: string) => {
     const target = profiles.find(p => p.id === profileId);
@@ -208,6 +222,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setRoutines(getProfileStorage(profileId, 'routines', INITIAL_ROUTINES));
     setReminders(getProfileStorage(profileId, 'reminders', INITIAL_REMINDERS));
     setGymSplits(getProfileStorage(profileId, 'gymSplits', INITIAL_GYM_SPLITS));
+    setGymCompletedDays(getProfileStorage(profileId, 'gymCompletedDays', {}));
+    setClasses(getProfileStorage(profileId, 'classes', INITIAL_CLASSES));
     setThemeState(getProfileStorage(profileId, 'theme', 'light'));
   };
 
@@ -364,6 +380,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setHabits(prev => [...prev, newHabit]);
   };
 
+  const deleteHabit = (id: string) => {
+    setHabits(prev => prev.filter(h => h.id !== id));
+  };
+
   // Routine functions
   const toggleRoutineItemToday = (id: string) => {
     const todayStr = getTodayString();
@@ -455,6 +475,38 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
   };
 
+  const toggleGymWorkoutCompleted = (day: DayOfWeek) => {
+    setGymCompletedDays(prev => {
+      const nextState = !prev[day];
+      if (nextState) triggerConfetti();
+      return { ...prev, [day]: nextState };
+    });
+  };
+
+  // Class functions
+  const addClass = (itemData: Omit<ClassItem, 'id'>) => {
+    const newClass: ClassItem = {
+      ...itemData,
+      id: 'c_' + Date.now()
+    };
+    setClasses(prev => [...prev, newClass]);
+  };
+
+  const deleteClass = (id: string) => {
+    setClasses(prev => prev.filter(c => c.id !== id));
+  };
+
+  const toggleClassCompleted = (id: string) => {
+    setClasses(prev => prev.map(c => {
+      if (c.id === id) {
+        const nextComp = !c.completed;
+        if (nextComp) triggerConfetti();
+        return { ...c, completed: nextComp };
+      }
+      return c;
+    }));
+  };
+
   // Active Quote filtering
   const quotesForCategory = INITIAL_QUOTES.filter(q => q.category === selectedQuoteCategory);
   const activeQuote = quotesForCategory[0] || INITIAL_QUOTES[0];
@@ -471,6 +523,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setRoutines(INITIAL_ROUTINES);
     setReminders(INITIAL_REMINDERS);
     setGymSplits(INITIAL_GYM_SPLITS);
+    setGymCompletedDays({});
+    setClasses(INITIAL_CLASSES);
     setUserNameState('Eve');
   };
 
@@ -503,6 +557,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       habits,
       toggleHabitToday,
       addHabit,
+      deleteHabit,
       routines,
       toggleRoutineItemToday,
       addRoutineItem,
@@ -511,9 +566,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       dismissReminder,
       addReminder,
       gymSplits,
+      gymCompletedDays,
+      toggleGymWorkoutCompleted,
       toggleExerciseToday,
       addExerciseToDay,
       updateGymSplitFocusTitle,
+      classes,
+      addClass,
+      deleteClass,
+      toggleClassCompleted,
       waterGlassesToday,
       incrementWater,
       decrementWater,

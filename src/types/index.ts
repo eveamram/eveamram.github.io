@@ -131,3 +131,13 @@ export interface UserNotification {
   read: boolean;
   type: 'assistant' | 'reminder' | 'streak';
 }
+
+export interface ClassItem {
+  id: string;
+  day: DayOfWeek;
+  name: string;
+  time: string;
+  location: string;
+  type?: string;
+  completed?: boolean;
+}

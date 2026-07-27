@@ -1,4 +1,13 @@
-import { TaskItem, HabitItem, ReminderItem, GoalItem, RoutineTask, GymSplitDay } from '../types';
+import { TaskItem, HabitItem, ReminderItem, GoalItem, RoutineTask, GymSplitDay, ClassItem } from '../types';
+
+export const INITIAL_CLASSES: ClassItem[] = [
+  { id: 'c1', day: 'Monday', name: 'Computer Science 101', time: '09:00 AM - 10:30 AM', location: 'Turing Hall 201', type: 'Lecture' },
+  { id: 'c2', day: 'Monday', name: 'Calculus II', time: '11:00 AM - 12:30 PM', location: 'Math Building 104', type: 'Lecture' },
+  { id: 'c3', day: 'Tuesday', name: 'Organic Chemistry Lab', time: '01:00 PM - 03:30 PM', location: 'Science Center 302', type: 'Lab' },
+  { id: 'c4', day: 'Wednesday', name: 'Computer Science 101', time: '09:00 AM - 10:30 AM', location: 'Turing Hall 201', type: 'Lecture' },
+  { id: 'c5', day: 'Thursday', name: 'Psychology & Cognition', time: '02:00 PM - 03:30 PM', location: 'Humanities 115', type: 'Seminar' },
+  { id: 'c6', day: 'Friday', name: 'Linear Algebra', time: '10:00 AM - 11:30 AM', location: 'Math Building 108', type: 'Lecture' }
+];
 
 const getTodayString = (offsetDays = 0) => {
   const d = new Date();
