@@ -7,9 +7,17 @@ interface SidebarProps {
   onOpenAuth: () => void;
   onOpenAdmin: () => void;
   onOpenNotifications: () => void;
+  isOpenMobile?: boolean;
+  onCloseMobile?: () => void;
 }
 
-export const SidebarNavigation: React.FC<SidebarProps> = ({ onOpenAuth, onOpenAdmin, onOpenNotifications }) => {
+export const SidebarNavigation: React.FC<SidebarProps> = ({ 
+  onOpenAuth, 
+  onOpenAdmin, 
+  onOpenNotifications,
+  isOpenMobile = false,
+  onCloseMobile
+}) => {
   const { activeTab, setActiveTab, currentProfile, theme, toggleTheme, notifications } = useStore();
 
   const navItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
@@ -25,27 +33,48 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({ onOpenAuth, onOpenAd
 
   const handleTabClick = (tabId: ActiveTab) => {
     setActiveTab(tabId);
+    if (onCloseMobile) onCloseMobile();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <aside
-      className="sidebar-container"
-      style={{
-        width: '240px',
-        height: '100vh',
-        position: 'sticky',
-        top: 0,
-        background: 'var(--bg-card)',
-        borderRight: '1px solid var(--border-color)',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '24px 16px',
-        boxSizing: 'border-box',
-        flexShrink: 0
-      }}
-    >
+    <>
+      {/* Mobile Drawer Overlay Backdrop */}
+      {isOpenMobile && (
+        <div 
+          onClick={onCloseMobile}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.35)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 99999,
+            display: 'block'
+          }}
+        />
+      )}
+
+      <aside
+        className={`sidebar-container ${isOpenMobile ? 'mobile-open' : ''}`}
+        style={{
+          width: '260px',
+          height: '100vh',
+          position: 'sticky',
+          top: 0,
+          background: 'var(--bg-card)',
+          borderRight: '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          padding: '24px 16px',
+          boxSizing: 'border-box',
+          flexShrink: 0
+        }}
+      >
       {/* Top Section: Brand & Nav Links */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {/* Brand Logo Header */}
@@ -163,6 +192,7 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({ onOpenAuth, onOpenAd
         </div>
       </div>
     </aside>
+  </>
   );
 };
 

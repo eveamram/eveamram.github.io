@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Sun, Moon, Bell, UserCheck, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Sun, Moon, Bell, UserCheck, RefreshCw, ShieldCheck, Menu } from 'lucide-react';
 
 interface HeaderProps {
   onOpenNotifications: () => void;
   onOpenAuth: () => void;
   onOpenAdmin: () => void;
+  onOpenMobileSidebar?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth, onOpenAdmin }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth, onOpenAdmin, onOpenMobileSidebar }) => {
   const { 
     userName, 
     setUserName, 
@@ -51,6 +52,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenNotifications, onOpenAuth,
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         {/* Concentric Ring Aura Brand Logo & Date */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {onOpenMobileSidebar && (
+            <button
+              onClick={onOpenMobileSidebar}
+              className="icon-btn mobile-menu-btn"
+              title="Open Sidebar Navigation"
+              style={{ width: '38px', height: '38px' }}
+            >
+              <Menu size={20} />
+            </button>
+          )}
+
           <div style={{
             width: '38px',
             height: '38px',
