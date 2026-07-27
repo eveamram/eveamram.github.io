@@ -2,6 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { cloudSyncService, GlobalDataSchema } from '../services/cloudService';
 import { 
+  supabase, 
+  fetchProfileItemsFromSupabase, 
+  insertProfileItemToSupabase, 
+  updateProfileItemInSupabase, 
+  deleteProfileItemFromSupabase
+} from '../services/supabaseClient';
+import { 
   TaskItem, 
   HabitItem, 
   ReminderItem, 
@@ -29,6 +36,7 @@ interface StoreState {
   setUserName: (name: string) => void;
   profiles: UserProfile[];
   currentProfile: UserProfile;
+  activeProfileId: string;
   switchProfile: (profileId: string) => void;
   createProfile: (name: string, avatarEmoji: string, color: string) => void;
   updateProfile: (profileId: string, name: string, avatarEmoji: string, color: string) => void;
@@ -111,7 +119,7 @@ interface StoreState {
   triggerConfetti: () => void;
   resetAllData: () => void;
 
-  // Admin & Real-Time Cloud Data Sync
+  // Admin Mode & Real-Time Global Settings
   isAdmin: boolean;
   setIsAdmin: (val: boolean) => void;
   toggleAdminMode: () => void;
@@ -125,190 +133,239 @@ interface StoreState {
 
 const StoreContext = createContext<StoreState | undefined>(undefined);
 
-const STORAGE_PREFIX = 'aura_dashboard_v6_';
-
 const DEFAULT_PROFILES: UserProfile[] = [
-  { id: 'p_eve', name: 'Eve', avatarEmoji: '✨', color: '#007AFF', createdAt: '2026-07-26' },
-  { id: 'p_alex', name: 'Alex', avatarEmoji: '🌿', color: '#34C759', createdAt: '2026-07-26' }
+  { id: 'eve', name: 'Eve', avatarEmoji: '✨', color: '#007AFF', createdAt: '2026-07-26' },
+  { id: 'alex', name: 'Alex', avatarEmoji: '🌿', color: '#34C759', createdAt: '2026-07-26' }
 ];
 
-function sanitizeGymSplits(splits: GymSplitDay[]): GymSplitDay[] {
-  if (!splits || !Array.isArray(splits)) return INITIAL_GYM_SPLITS;
-  return splits.map(s => ({
-    ...s,
-    exercises: []
-  }));
-}
-
-function getInitialProfiles(): UserProfile[] {
-  try {
-    const item = localStorage.getItem(STORAGE_PREFIX + 'profiles_list');
-    return item ? JSON.parse(item) : DEFAULT_PROFILES;
-  } catch {
-    return DEFAULT_PROFILES;
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
   }
-}
-
-function getInitialActiveProfileId(): string {
-  try {
-    const item = localStorage.getItem(STORAGE_PREFIX + 'active_profile_id');
-    return item ? JSON.parse(item) : 'p_eve';
-  } catch {
-    return 'p_eve';
-  }
-}
-
-function getProfileStorage<T>(profileId: string, key: string, fallback: T): T {
-  try {
-    const cloudBundle = cloudSyncService.loadProfileFromCloud(profileId);
-    if (cloudBundle && cloudBundle[key] !== undefined) {
-      return cloudBundle[key];
-    }
-    const item = localStorage.getItem(`${STORAGE_PREFIX}${profileId}_${key}`);
-    return item ? JSON.parse(item) : fallback;
-  } catch {
-    return fallback;
-  }
+  return 'id_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
 }
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [profiles, setProfiles] = useState<UserProfile[]>(getInitialProfiles);
-  const [activeProfileId, setActiveProfileId] = useState<string>(getInitialActiveProfileId);
+  const [profiles, setProfiles] = useState<UserProfile[]>(DEFAULT_PROFILES);
+  const [activeProfileId, setActiveProfileId] = useState<string>('eve');
 
   const currentProfile = profiles.find(p => p.id === activeProfileId) || profiles[0] || DEFAULT_PROFILES[0];
   const [userName, setUserNameState] = useState<string>(currentProfile.name);
 
-  const [theme, setThemeState] = useState<AppTheme>(() => getProfileStorage(activeProfileId, 'theme', 'light'));
+  // Client interface preferences (localStorage acceptable for non-shared UI settings)
+  const [theme, setThemeState] = useState<AppTheme>(() => {
+    try {
+      return (localStorage.getItem('aura_pref_theme') as AppTheme) || 'light';
+    } catch {
+      return 'light';
+    }
+  });
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
-  const [viewMode, setViewModeState] = useState<ViewMode>(() => getProfileStorage(activeProfileId, 'viewMode', 'phone'));
-  const [isDeviceFrame, setIsDeviceFrame] = useState<boolean>(() => getProfileStorage(activeProfileId, 'deviceFrame', true));
+  const [viewMode, setViewModeState] = useState<ViewMode>('phone');
+  const [isDeviceFrame, setIsDeviceFrame] = useState<boolean>(true);
 
-  const [goals, setGoals] = useState<GoalItem[]>(() => getProfileStorage(activeProfileId, 'goals', INITIAL_GOALS));
-  const [todaysMainGoalId, setTodaysMainGoalId] = useState<string>(() => getProfileStorage(activeProfileId, 'todaysGoal', INITIAL_GOALS[0]?.id || 'g1'));
+  // Profile-bound shared state arrays (Source of Truth = Supabase public.profile_items)
+  const [goals, setGoals] = useState<GoalItem[]>(INITIAL_GOALS);
+  const [todaysMainGoalId, setTodaysMainGoalId] = useState<string>(INITIAL_GOALS[0]?.id || 'g1');
+  const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
+  const [habits, setHabits] = useState<HabitItem[]>(INITIAL_HABITS);
+  const [routines, setRoutines] = useState<RoutineTask[]>(INITIAL_ROUTINES);
+  const [reminders, setReminders] = useState<ReminderItem[]>(INITIAL_REMINDERS);
+  const [gymSplits, setGymSplits] = useState<GymSplitDay[]>(INITIAL_GYM_SPLITS);
+  const [gymCompletedDays, setGymCompletedDays] = useState<Record<string, boolean>>({});
+  const [classes, setClasses] = useState<ClassItem[]>(INITIAL_CLASSES);
+  const [groceries, setGroceries] = useState<GroceryItem[]>(INITIAL_GROCERIES);
   
-  const [tasks, setTasks] = useState<TaskItem[]>(() => getProfileStorage(activeProfileId, 'tasks', INITIAL_TASKS));
-  const [habits, setHabits] = useState<HabitItem[]>(() => getProfileStorage(activeProfileId, 'habits', INITIAL_HABITS));
-  const [routines, setRoutines] = useState<RoutineTask[]>(() => getProfileStorage(activeProfileId, 'routines', INITIAL_ROUTINES));
-  const [reminders, setReminders] = useState<ReminderItem[]>(() => getProfileStorage(activeProfileId, 'reminders', INITIAL_REMINDERS));
-  const [gymSplits, setGymSplits] = useState<GymSplitDay[]>(() => sanitizeGymSplits(getProfileStorage(activeProfileId, 'gymSplits', INITIAL_GYM_SPLITS)));
-  const [gymCompletedDays, setGymCompletedDays] = useState<Record<string, boolean>>(() => getProfileStorage(activeProfileId, 'gymCompletedDays', {}));
-  const [classes, setClasses] = useState<ClassItem[]>(() => getProfileStorage(activeProfileId, 'classes', INITIAL_CLASSES));
-  const [groceries, setGroceries] = useState<GroceryItem[]>(() => getProfileStorage(activeProfileId, 'groceries', INITIAL_GROCERIES));
-  
-  const [waterGlassesToday, setWaterGlassesToday] = useState<number>(() => getProfileStorage(activeProfileId, 'waterGlasses', 5));
-  const [todayMood, setTodayMoodState] = useState<MoodType | null>(() => getProfileStorage(activeProfileId, 'todayMood', 'Energized ⚡'));
-  
-  const [selectedQuoteCategory, setSelectedQuoteCategory] = useState<QuoteCategory>(() => 
-    getProfileStorage(activeProfileId, 'quoteCategory', 'Stoicism')
-  );
-
-  // Cloud Sync & Admin Mode State
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [globalData, setGlobalData] = useState<GlobalDataSchema>(cloudSyncService.getGlobalData());
-
-  useEffect(() => {
-    const unsubscribe = cloudSyncService.subscribeToGlobalData((latest) => {
-      setGlobalData(latest);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const toggleAdminMode = () => setIsAdmin(prev => !prev);
-
-  const updateGlobalWorkoutSplits = (splits: GymSplitDay[]) => {
-    cloudSyncService.updateGlobalData(prev => ({ ...prev, workoutSplits: splits }));
-  };
-
-  const updateGlobalRoutines = (routines: RoutineTask[]) => {
-    cloudSyncService.updateGlobalData(prev => ({ ...prev, routineTemplates: routines }));
-  };
-
-  const updateGlobalQuotes = (quotes: { id: string; quote: string; author: string; category: string }[]) => {
-    cloudSyncService.updateGlobalData(prev => ({ ...prev, quotes: quotes as any }));
-  };
-
-  const updateGlobalAnnouncements = (announcements: { id: string; title: string; message: string; date: string; priority: 'low' | 'medium' | 'high' }[]) => {
-    cloudSyncService.updateGlobalData(prev => ({ ...prev, announcements }));
-  };
-
-  const updateGlobalSettings = (settings: { globalNotice: string; themeAccent: string; version: string }) => {
-    cloudSyncService.updateGlobalData(prev => ({ ...prev, appSettings: settings }));
-  };
+  const [waterGlassesToday, setWaterGlassesToday] = useState<number>(5);
+  const [todayMood, setTodayMoodState] = useState<MoodType | null>('Energized ⚡');
+  const [selectedQuoteCategory, setSelectedQuoteCategory] = useState<QuoteCategory>('Stoicism');
 
   const [notifications, setNotifications] = useState<UserNotification[]>([
     {
       id: 'n1',
       title: `Welcome ${currentProfile.name}!`,
-      body: 'Your personal routines and fitness splits are loaded.',
+      body: 'Supabase real-time shared database is connected.',
       date: 'Just Now',
       read: false,
       type: 'assistant'
     }
   ]);
 
-  // Sync shared profile state to cloud store & broadcast updates
-  useEffect(() => {
-    localStorage.setItem(STORAGE_PREFIX + 'profiles_list', JSON.stringify(profiles));
-  }, [profiles]);
+  // Cloud Sync & Admin Mode State
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [globalData, setGlobalData] = useState<GlobalDataSchema>(cloudSyncService.getGlobalData());
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_PREFIX + 'active_profile_id', JSON.stringify(activeProfileId));
-  }, [activeProfileId]);
-
-  useEffect(() => { 
-    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_theme`, JSON.stringify(theme)); 
     document.documentElement.setAttribute('data-theme', theme);
-  }, [theme, activeProfileId]);
+    try {
+      localStorage.setItem('aura_pref_theme', theme);
+    } catch {}
+  }, [theme]);
 
-  // Save composite profile data bundle to shared cloud & local storage
-  useEffect(() => { 
-    const profileBundle = {
-      tasks,
-      habits,
-      routines,
-      reminders,
-      gymSplits,
-      gymCompletedDays,
-      classes,
-      groceries,
-      goals,
-      updatedAt: new Date().toISOString()
-    };
-    
-    // Save to cloud & local storage fallback
-    cloudSyncService.saveProfileToCloud(activeProfileId, profileBundle);
-    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_tasks`, JSON.stringify(tasks));
-    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_habits`, JSON.stringify(habits));
-    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_routines`, JSON.stringify(routines));
-    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_reminders`, JSON.stringify(reminders));
-    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymSplits`, JSON.stringify(gymSplits));
-    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymCompletedDays`, JSON.stringify(gymCompletedDays));
-    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_classes`, JSON.stringify(classes));
-    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_groceries`, JSON.stringify(groceries));
-    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_goals`, JSON.stringify(goals));
-  }, [tasks, habits, routines, reminders, gymSplits, gymCompletedDays, classes, groceries, goals, activeProfileId]);
-
-  // Real-time synchronization across devices and instances for the active profile
+  // Main Supabase public.profile_items Initial Fetch & Realtime Channel Subscription
   useEffect(() => {
-    cloudSyncService.setActiveProfile(activeProfileId);
+    let isMounted = true;
+    console.log(`[Supabase Realtime Sync] Connecting for active profile: "${activeProfileId}"`);
 
-    const unsubscribe = cloudSyncService.subscribeToProfileUpdates((profileId, incomingData) => {
-      if (profileId === activeProfileId) {
-        const cloudData = incomingData || cloudSyncService.loadProfileFromCloud(profileId);
-        if (cloudData) {
-          if (cloudData.tasks) setTasks(cloudData.tasks);
-          if (cloudData.habits) setHabits(cloudData.habits);
-          if (cloudData.routines) setRoutines(cloudData.routines);
-          if (cloudData.reminders) setReminders(cloudData.reminders);
-          if (cloudData.gymSplits) setGymSplits(cloudData.gymSplits);
-          if (cloudData.gymCompletedDays) setGymCompletedDays(cloudData.gymCompletedDays);
-          if (cloudData.classes) setClasses(cloudData.classes);
-          if (cloudData.groceries) setGroceries(cloudData.groceries);
-          if (cloudData.goals) setGoals(cloudData.goals);
-        }
+    async function loadSupabaseItems() {
+      const rows = await fetchProfileItemsFromSupabase(activeProfileId);
+      if (!isMounted) return;
+
+      if (rows && rows.length > 0) {
+        const loadedGroceries: GroceryItem[] = [];
+        const loadedTasks: TaskItem[] = [];
+        const loadedHabits: HabitItem[] = [];
+        const loadedRoutines: RoutineTask[] = [];
+        const loadedReminders: ReminderItem[] = [];
+        const loadedClasses: ClassItem[] = [];
+        const loadedGoals: GoalItem[] = [];
+
+        rows.forEach(r => {
+          if (r.item_type === 'grocery') {
+            loadedGroceries.push({
+              id: r.id,
+              name: r.title,
+              category: (r.category as any) || 'Other',
+              iconName: r.metadata?.iconName || 'ShoppingBag',
+              completed: r.completed,
+              quantity: r.metadata?.quantity || '1'
+            });
+          } else if (r.item_type === 'task') {
+            loadedTasks.push({
+              id: r.id,
+              title: r.title,
+              category: (r.category as any) || 'Personal',
+              completed: r.completed,
+              priority: r.metadata?.priority || 'medium',
+              createdAt: r.created_at || new Date().toISOString()
+            });
+          } else if (r.item_type === 'habit') {
+            loadedHabits.push({
+              id: r.id,
+              title: r.title,
+              category: (r.category as any) || 'Health',
+              iconName: r.metadata?.iconName || 'Zap',
+              streak: r.metadata?.streak || 0,
+              bestStreak: r.metadata?.bestStreak || 0,
+              targetDaysPerWeek: r.metadata?.targetDaysPerWeek || 7,
+              completedToday: r.completed
+            } as any);
+          } else if (r.item_type === 'routine') {
+            loadedRoutines.push({
+              id: r.id,
+              day: r.metadata?.day || 'Monday',
+              title: r.title,
+              iconName: r.metadata?.iconName || 'CheckCircle',
+              completedDates: r.metadata?.completedDates || []
+            });
+          } else if (r.item_type === 'reminder') {
+            loadedReminders.push({
+              id: r.id,
+              title: r.title,
+              category: (r.category as any) || 'Personal',
+              dueDate: r.metadata?.dueDate || new Date().toISOString().split('T')[0],
+              iconName: r.metadata?.iconName || 'Bell',
+              dismissed: r.completed
+            });
+          } else if (r.item_type === 'class') {
+            loadedClasses.push({
+              id: r.id,
+              day: r.metadata?.day || 'Monday',
+              name: r.title,
+              time: r.metadata?.time || '09:00 AM',
+              location: r.metadata?.location || 'Room 101',
+              completed: r.completed
+            });
+          } else if (r.item_type === 'goal') {
+            loadedGoals.push({
+              id: r.id,
+              title: r.title,
+              target: r.metadata?.target || 10,
+              current: r.metadata?.current || 0,
+              unit: r.metadata?.unit || 'hrs',
+              iconName: r.metadata?.iconName || 'Target',
+              color: r.metadata?.color || '#007AFF'
+            });
+          }
+        });
+
+        if (loadedGroceries.length > 0) setGroceries(loadedGroceries);
+        if (loadedTasks.length > 0) setTasks(loadedTasks);
+        if (loadedHabits.length > 0) setHabits(loadedHabits);
+        if (loadedRoutines.length > 0) setRoutines(loadedRoutines);
+        if (loadedReminders.length > 0) setReminders(loadedReminders);
+        if (loadedClasses.length > 0) setClasses(loadedClasses);
+        if (loadedGoals.length > 0) setGoals(loadedGoals);
       }
-    });
-    return () => unsubscribe();
+    }
+
+    loadSupabaseItems();
+
+    // Supabase Real-Time Channel Subscription
+    const channel = supabase
+      .channel(`public:profile_items:${activeProfileId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profile_items', filter: `profile_id=eq.${activeProfileId}` },
+        (payload) => {
+          console.log('[Supabase Realtime Event Received]:', payload);
+          const { eventType, new: newRow, old: oldRow } = payload as any;
+
+          if (eventType === 'INSERT' && newRow) {
+            if (newRow.item_type === 'grocery') {
+              const item: GroceryItem = { id: newRow.id, name: newRow.title, category: newRow.category || 'Other', iconName: newRow.metadata?.iconName || 'ShoppingBag', completed: newRow.completed, quantity: newRow.metadata?.quantity || '1' };
+              setGroceries(prev => prev.some(g => g.id === newRow.id) ? prev : [item, ...prev]);
+            } else if (newRow.item_type === 'task') {
+              const item: TaskItem = { id: newRow.id, title: newRow.title, category: newRow.category || 'Personal', completed: newRow.completed, priority: newRow.metadata?.priority || 'medium', createdAt: newRow.created_at || new Date().toISOString() };
+              setTasks(prev => prev.some(t => t.id === newRow.id) ? prev : [item, ...prev]);
+            } else if (newRow.item_type === 'habit') {
+              const item: HabitItem = { id: newRow.id, title: newRow.title, iconName: newRow.metadata?.iconName || 'Zap', streak: newRow.metadata?.streak || 0, bestStreak: newRow.metadata?.bestStreak || 0, targetDaysPerWeek: 7, completedToday: newRow.completed };
+              setHabits(prev => prev.some(h => h.id === newRow.id) ? prev : [item, ...prev]);
+            } else if (newRow.item_type === 'routine') {
+              const item: RoutineTask = { id: newRow.id, day: newRow.metadata?.day || 'Monday', title: newRow.title, iconName: newRow.metadata?.iconName || 'CheckCircle', completedDates: newRow.metadata?.completedDates || [] };
+              setRoutines(prev => prev.some(r => r.id === newRow.id) ? prev : [item, ...prev]);
+            } else if (newRow.item_type === 'reminder') {
+              const item: ReminderItem = { id: newRow.id, title: newRow.title, category: newRow.category || 'Personal', dueDate: newRow.metadata?.dueDate || new Date().toISOString().split('T')[0], iconName: newRow.metadata?.iconName || 'Bell', dismissed: newRow.completed };
+              setReminders(prev => prev.some(r => r.id === newRow.id) ? prev : [item, ...prev]);
+            } else if (newRow.item_type === 'class') {
+              const item: ClassItem = { id: newRow.id, day: newRow.metadata?.day || 'Monday', name: newRow.title, time: newRow.metadata?.time || '09:00 AM', location: newRow.metadata?.location || 'Room 101', completed: newRow.completed };
+              setClasses(prev => prev.some(c => c.id === newRow.id) ? prev : [item, ...prev]);
+            }
+          } else if (eventType === 'UPDATE' && newRow) {
+            if (newRow.item_type === 'grocery') {
+              setGroceries(prev => prev.map(g => g.id === newRow.id ? { ...g, name: newRow.title, completed: newRow.completed, category: newRow.category || g.category, quantity: newRow.metadata?.quantity || g.quantity } : g));
+            } else if (newRow.item_type === 'task') {
+              setTasks(prev => prev.map(t => t.id === newRow.id ? { ...t, title: newRow.title, completed: newRow.completed, category: newRow.category || t.category, priority: newRow.metadata?.priority || t.priority } : t));
+            } else if (newRow.item_type === 'habit') {
+              setHabits(prev => prev.map(h => h.id === newRow.id ? { ...h, title: newRow.title, completedToday: newRow.completed, streak: newRow.metadata?.streak ?? h.streak, bestStreak: newRow.metadata?.bestStreak ?? h.bestStreak } : h));
+            } else if (newRow.item_type === 'routine') {
+              setRoutines(prev => prev.map(r => r.id === newRow.id ? { ...r, title: newRow.title, completedDates: newRow.metadata?.completedDates || r.completedDates } : r));
+            } else if (newRow.item_type === 'reminder') {
+              setReminders(prev => prev.map(r => r.id === newRow.id ? { ...r, title: newRow.title, dismissed: newRow.completed } : r));
+            } else if (newRow.item_type === 'class') {
+              setClasses(prev => prev.map(c => c.id === newRow.id ? { ...c, name: newRow.title, completed: newRow.completed } : c));
+            }
+          } else if (eventType === 'DELETE' && oldRow) {
+            const targetId = oldRow.id;
+            setGroceries(prev => prev.filter(g => g.id !== targetId));
+            setTasks(prev => prev.filter(t => t.id !== targetId));
+            setHabits(prev => prev.filter(h => h.id !== targetId));
+            setRoutines(prev => prev.filter(r => r.id !== targetId));
+            setReminders(prev => prev.filter(r => r.id !== targetId));
+            setClasses(prev => prev.filter(c => c.id !== targetId));
+            setGoals(prev => prev.filter(g => g.id !== targetId));
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log(`[Supabase Realtime Subscription Status for "${activeProfileId}"]:`, status);
+      });
+
+    return () => {
+      isMounted = false;
+      console.log(`[Supabase Realtime Sync] Unsubscribing channel for profile: "${activeProfileId}"`);
+      supabase.removeChannel(channel);
+    };
   }, [activeProfileId]);
 
   const switchProfile = (profileId: string) => {
@@ -318,21 +375,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setActiveProfileId(profileId);
     setUserNameState(target.name);
 
-    // Load data for switched profile
-    setTasks(getProfileStorage(profileId, 'tasks', INITIAL_TASKS));
-    setHabits(getProfileStorage(profileId, 'habits', INITIAL_HABITS));
-    setRoutines(getProfileStorage(profileId, 'routines', INITIAL_ROUTINES));
-    setReminders(getProfileStorage(profileId, 'reminders', INITIAL_REMINDERS));
-    setGymSplits(getProfileStorage(profileId, 'gymSplits', INITIAL_GYM_SPLITS));
-    setGymCompletedDays(getProfileStorage(profileId, 'gymCompletedDays', {}));
-    setClasses(getProfileStorage(profileId, 'classes', INITIAL_CLASSES));
-    setGroceries(getProfileStorage(profileId, 'groceries', INITIAL_GROCERIES));
-    setThemeState(getProfileStorage(profileId, 'theme', 'light'));
+    // Clear previous UI state before fetching new profile
+    setGroceries([]);
+    setTasks([]);
+    setHabits([]);
+    setRoutines([]);
+    setReminders([]);
+    setClasses([]);
+    setGoals([]);
   };
 
   const createProfile = (name: string, avatarEmoji: string, color: string) => {
+    const newId = name.toLowerCase().replace(/\s+/g, '_');
     const newProfile: UserProfile = {
-      id: `p_${Date.now()}`,
+      id: newId,
       name,
       avatarEmoji,
       color,
@@ -362,9 +418,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         spread: 60,
         origin: { y: 0.7 }
       });
-    } catch {
-      // fallback
-    }
+    } catch {}
   };
 
   const setViewMode = (mode: ViewMode) => {
@@ -411,145 +465,197 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Goal functions
-  const updateGoalProgress = (id: string, delta: number) => {
-    setGoals(prev => prev.map(g => {
-      if (g.id === id) {
-        const nextVal = Math.max(0, Math.min(g.target, parseFloat((g.current + delta).toFixed(1))));
-        if (nextVal === g.target && g.current < g.target) {
-          triggerConfetti();
-        }
-        return { ...g, current: nextVal };
-      }
-      return g;
-    }));
+  const updateGoalProgress = async (id: string, delta: number) => {
+    const target = goals.find(g => g.id === id);
+    if (!target) return;
+    const nextVal = Math.max(0, Math.min(target.target, parseFloat((target.current + delta).toFixed(1))));
+    if (nextVal === target.target && target.current < target.target) {
+      triggerConfetti();
+    }
+    setGoals(prev => prev.map(g => g.id === id ? { ...g, current: nextVal } : g));
+
+    await updateProfileItemInSupabase(id, activeProfileId, {
+      completed: nextVal >= target.target,
+      metadata: { target: target.target, current: nextVal, unit: target.unit, iconName: target.iconName, color: target.color }
+    });
   };
 
-  const addGoal = (newGoal: Omit<GoalItem, 'id'>) => {
-    if (goals.length >= 3) return; // Keep max 3 main goals
-    const goal: GoalItem = { ...newGoal, id: 'g_' + Date.now() };
+  const addGoal = async (newGoal: Omit<GoalItem, 'id'>) => {
+    if (goals.length >= 3) return;
+    const id = generateUUID();
+    const goal: GoalItem = { ...newGoal, id };
     setGoals(prev => [...prev, goal]);
+
+    await insertProfileItemToSupabase({
+      id,
+      profile_id: activeProfileId,
+      item_type: 'goal',
+      title: newGoal.title,
+      completed: false,
+      metadata: { target: newGoal.target, current: newGoal.current, unit: newGoal.unit, iconName: newGoal.iconName, color: newGoal.color }
+    });
   };
 
   // Task functions
-  const toggleTask = (id: string) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === id) {
-        const completed = !t.completed;
-        if (completed) triggerConfetti();
-        return { 
-          ...t, 
-          completed, 
-          completedAt: completed ? new Date().toISOString().split('T')[0] : undefined 
-        };
-      }
-      return t;
-    }));
+  const toggleTask = async (id: string) => {
+    const target = tasks.find(t => t.id === id);
+    if (!target) return;
+    const completed = !target.completed;
+    if (completed) triggerConfetti();
+
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed } : t));
+
+    await updateProfileItemInSupabase(id, activeProfileId, { completed });
   };
 
-  const addTask = (taskData: Omit<TaskItem, 'id' | 'createdAt' | 'completed'>) => {
+  const addTask = async (taskData: Omit<TaskItem, 'id' | 'createdAt' | 'completed'>) => {
+    const id = generateUUID();
     const newTask: TaskItem = {
       ...taskData,
-      id: 't_' + Date.now(),
+      id,
       completed: false,
       createdAt: new Date().toISOString().split('T')[0]
     };
     setTasks(prev => [newTask, ...prev]);
+
+    await insertProfileItemToSupabase({
+      id,
+      profile_id: activeProfileId,
+      item_type: 'task',
+      title: taskData.title,
+      category: taskData.category,
+      completed: false,
+      metadata: { priority: taskData.priority }
+    });
   };
 
-  const deleteTask = (id: string) => {
+  const deleteTask = async (id: string) => {
     setTasks(prev => prev.filter(t => t.id !== id));
+    await deleteProfileItemFromSupabase(id, activeProfileId);
   };
 
   // Habit functions
-  const getTodayString = () => new Date().toISOString().split('T')[0];
+  const toggleHabitToday = async (id: string) => {
+    const target = habits.find(h => h.id === id);
+    if (!target) return;
+    const isDone = !target.completedToday;
+    let streak = target.streak;
+    if (isDone) {
+      streak += 1;
+      triggerConfetti();
+    } else {
+      streak = Math.max(0, streak - 1);
+    }
+    const bestStreak = Math.max(target.bestStreak, streak);
 
-  const toggleHabitToday = (id: string) => {
-    const todayStr = getTodayString();
-    setHabits(prev => prev.map(h => {
-      if (h.id === id) {
-        const isDone = !h.completedToday;
-        let streak = h.streak;
-        if (isDone) {
-          streak += 1;
-          triggerConfetti();
-        } else {
-          streak = Math.max(0, streak - 1);
-        }
-        return {
-          ...h,
-          completedToday: isDone,
-          streak,
-          bestStreak: Math.max(h.bestStreak, streak),
-          lastCompletedDate: isDone ? todayStr : h.lastCompletedDate
-        };
-      }
-      return h;
-    }));
+    setHabits(prev => prev.map(h => h.id === id ? { ...h, completedToday: isDone, streak, bestStreak } : h));
+
+    await updateProfileItemInSupabase(id, activeProfileId, {
+      completed: isDone,
+      metadata: { streak, bestStreak, iconName: target.iconName }
+    });
   };
 
-  const addHabit = (habitData: Omit<HabitItem, 'id' | 'streak' | 'bestStreak' | 'completedToday'>) => {
+  const addHabit = async (habitData: Omit<HabitItem, 'id' | 'streak' | 'bestStreak' | 'completedToday'>) => {
+    const id = generateUUID();
     const newHabit: HabitItem = {
       ...habitData,
-      id: 'h_' + Date.now(),
+      id,
       streak: 0,
       bestStreak: 0,
       completedToday: false
     };
     setHabits(prev => [...prev, newHabit]);
+
+    await insertProfileItemToSupabase({
+      id,
+      profile_id: activeProfileId,
+      item_type: 'habit',
+      title: habitData.title,
+      completed: false,
+      metadata: { streak: 0, bestStreak: 0, iconName: habitData.iconName, targetDaysPerWeek: habitData.targetDaysPerWeek }
+    });
   };
 
-  const deleteHabit = (id: string) => {
+  const deleteHabit = async (id: string) => {
     setHabits(prev => prev.filter(h => h.id !== id));
+    await deleteProfileItemFromSupabase(id, activeProfileId);
   };
 
   // Routine functions
-  const toggleRoutineItemToday = (id: string) => {
-    const todayStr = getTodayString();
-    setRoutines(prev => prev.map(r => {
-      if (r.id === id) {
-        const isCompleted = r.completedDates.includes(todayStr);
-        let updatedDates: string[];
-        if (isCompleted) {
-          updatedDates = r.completedDates.filter(d => d !== todayStr);
-        } else {
-          updatedDates = [...r.completedDates, todayStr];
-          triggerConfetti();
-        }
-        return { ...r, completedDates: updatedDates };
-      }
-      return r;
-    }));
+  const toggleRoutineItemToday = async (id: string) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const target = routines.find(r => r.id === id);
+    if (!target) return;
+    const isCompleted = target.completedDates.includes(todayStr);
+    let updatedDates: string[];
+    if (isCompleted) {
+      updatedDates = target.completedDates.filter(d => d !== todayStr);
+    } else {
+      updatedDates = [...target.completedDates, todayStr];
+      triggerConfetti();
+    }
+
+    setRoutines(prev => prev.map(r => r.id === id ? { ...r, completedDates: updatedDates } : r));
+
+    await updateProfileItemInSupabase(id, activeProfileId, {
+      completed: updatedDates.length > 0,
+      metadata: { day: target.day, iconName: target.iconName, completedDates: updatedDates }
+    });
   };
 
-  const addRoutineItem = (item: Omit<RoutineTask, 'id' | 'completedDates'>) => {
+  const addRoutineItem = async (item: Omit<RoutineTask, 'id' | 'completedDates'>) => {
+    const id = generateUUID();
     const newRoutine: RoutineTask = {
       ...item,
-      id: 'r_' + Date.now(),
+      id,
       completedDates: []
     };
     setRoutines(prev => [...prev, newRoutine]);
+
+    await insertProfileItemToSupabase({
+      id,
+      profile_id: activeProfileId,
+      item_type: 'routine',
+      title: item.title,
+      completed: false,
+      metadata: { day: item.day, iconName: item.iconName, completedDates: [] }
+    });
   };
 
-  const deleteRoutineItem = (id: string) => {
+  const deleteRoutineItem = async (id: string) => {
     setRoutines(prev => prev.filter(r => r.id !== id));
+    await deleteProfileItemFromSupabase(id, activeProfileId);
   };
 
   // Reminder functions
-  const dismissReminder = (id: string) => {
+  const dismissReminder = async (id: string) => {
     setReminders(prev => prev.filter(r => r.id !== id));
+    await deleteProfileItemFromSupabase(id, activeProfileId);
   };
 
-  const addReminder = (reminderData: Omit<ReminderItem, 'id' | 'dismissed'>) => {
+  const addReminder = async (reminderData: Omit<ReminderItem, 'id' | 'dismissed'>) => {
+    const id = generateUUID();
     const newRem: ReminderItem = {
       ...reminderData,
-      id: 'rem_' + Date.now()
+      id
     };
     setReminders(prev => [...prev, newRem]);
+
+    await insertProfileItemToSupabase({
+      id,
+      profile_id: activeProfileId,
+      item_type: 'reminder',
+      title: reminderData.title,
+      category: reminderData.category,
+      completed: false,
+      metadata: { dueDate: reminderData.dueDate, iconName: reminderData.iconName, notes: reminderData.notes, amount: reminderData.amount }
+    });
   };
 
   // Gym functions
   const toggleExerciseToday = (exerciseId: string) => {
-    const todayStr = getTodayString();
+    const todayStr = new Date().toISOString().split('T')[0];
     setGymSplits(prev => prev.map(split => ({
       ...split,
       exercises: split.exercises.map((ex: ExerciseItem) => {
@@ -571,7 +677,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addExerciseToDay = (day: DayOfWeek, name: string, setsReps: string) => {
     const newEx = {
-      id: 'ex_' + Date.now(),
+      id: generateUUID(),
       name,
       setsReps,
       completedDates: []
@@ -593,65 +699,101 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }));
   };
 
-  const toggleGymWorkoutCompleted = (day: DayOfWeek) => {
-    setGymCompletedDays(prev => {
-      const nextState = !prev[day];
-      if (nextState) triggerConfetti();
-      return { ...prev, [day]: nextState };
+  const toggleGymWorkoutCompleted = async (day: DayOfWeek) => {
+    const nextState = !gymCompletedDays[day];
+    if (nextState) triggerConfetti();
+    setGymCompletedDays(prev => ({ ...prev, [day]: nextState }));
+
+    await insertProfileItemToSupabase({
+      id: generateUUID(),
+      profile_id: activeProfileId,
+      item_type: 'gym_split',
+      title: `Workout ${day}`,
+      category: day,
+      completed: nextState,
+      metadata: { day }
     });
   };
 
   // Class functions
-  const addClass = (itemData: Omit<ClassItem, 'id'>) => {
+  const addClass = async (itemData: Omit<ClassItem, 'id'>) => {
+    const id = generateUUID();
     const newClass: ClassItem = {
       ...itemData,
-      id: 'c_' + Date.now()
+      id
     };
     setClasses(prev => [...prev, newClass]);
+
+    await insertProfileItemToSupabase({
+      id,
+      profile_id: activeProfileId,
+      item_type: 'class',
+      title: itemData.name,
+      completed: false,
+      metadata: { day: itemData.day, time: itemData.time, location: itemData.location }
+    });
   };
 
-  const deleteClass = (id: string) => {
+  const deleteClass = async (id: string) => {
     setClasses(prev => prev.filter(c => c.id !== id));
+    await deleteProfileItemFromSupabase(id, activeProfileId);
   };
 
-  const toggleClassCompleted = (id: string) => {
-    setClasses(prev => prev.map(c => {
-      if (c.id === id) {
-        const nextComp = !c.completed;
-        if (nextComp) triggerConfetti();
-        return { ...c, completed: nextComp };
-      }
-      return c;
-    }));
+  const toggleClassCompleted = async (id: string) => {
+    const target = classes.find(c => c.id === id);
+    if (!target) return;
+    const nextComp = !target.completed;
+    if (nextComp) triggerConfetti();
+
+    setClasses(prev => prev.map(c => c.id === id ? { ...c, completed: nextComp } : c));
+
+    await updateProfileItemInSupabase(id, activeProfileId, { completed: nextComp });
   };
 
   // Grocery functions
-  const addGroceryItem = (itemData: Omit<GroceryItem, 'id' | 'completed'>) => {
+  const addGroceryItem = async (itemData: Omit<GroceryItem, 'id' | 'completed'>) => {
+    const id = generateUUID();
     const newItem: GroceryItem = {
       ...itemData,
-      id: 'g_' + Date.now(),
+      id,
       completed: false
     };
-    setGroceries(prev => [...prev, newItem]);
+    setGroceries(prev => [newItem, ...prev]);
+
+    await insertProfileItemToSupabase({
+      id,
+      profile_id: activeProfileId,
+      item_type: 'grocery',
+      title: itemData.name,
+      category: itemData.category,
+      completed: false,
+      metadata: { quantity: itemData.quantity, iconName: itemData.iconName }
+    });
   };
 
-  const deleteGroceryItem = (id: string) => {
+  const deleteGroceryItem = async (id: string) => {
     setGroceries(prev => prev.filter(g => g.id !== id));
+    await deleteProfileItemFromSupabase(id, activeProfileId);
   };
 
-  const toggleGroceryItem = (id: string) => {
-    setGroceries(prev => prev.map(g => {
-      if (g.id === id) {
-        const nextComp = !g.completed;
-        if (nextComp) triggerConfetti();
-        return { ...g, completed: nextComp };
-      }
-      return g;
-    }));
+  const toggleGroceryItem = async (id: string) => {
+    const target = groceries.find(g => g.id === id);
+    if (!target) return;
+    const nextComp = !target.completed;
+    if (nextComp) triggerConfetti();
+
+    setGroceries(prev => prev.map(g => g.id === id ? { ...g, completed: nextComp } : g));
+
+    await updateProfileItemInSupabase(id, activeProfileId, { completed: nextComp });
   };
 
-  const clearCompletedGroceries = () => {
+  const clearCompletedGroceries = async () => {
+    const toDelete = groceries.filter(g => g.completed);
     setGroceries(prev => prev.filter(g => !g.completed));
+
+    for (const g of toDelete) {
+      await deleteProfileItemFromSupabase(g.id, activeProfileId);
+    }
   };
 
   // Active Quote filtering
@@ -663,7 +805,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const resetAllData = () => {
-    localStorage.clear();
     setGoals(INITIAL_GOALS);
     setTasks(INITIAL_TASKS);
     setHabits(INITIAL_HABITS);
@@ -682,6 +823,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setUserName,
       profiles,
       currentProfile,
+      activeProfileId,
       switchProfile,
       createProfile,
       updateProfile,
@@ -743,13 +885,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       resetAllData,
       isAdmin,
       setIsAdmin,
-      toggleAdminMode,
+      toggleAdminMode: () => setIsAdmin(prev => !prev),
       globalData,
-      updateGlobalWorkoutSplits,
-      updateGlobalRoutines,
-      updateGlobalQuotes,
-      updateGlobalAnnouncements,
-      updateGlobalSettings
+      updateGlobalWorkoutSplits: (splits) => cloudSyncService.updateGlobalData(prev => ({ ...prev, workoutSplits: splits })),
+      updateGlobalRoutines: (routines) => cloudSyncService.updateGlobalData(prev => ({ ...prev, routineTemplates: routines })),
+      updateGlobalQuotes: (quotes) => cloudSyncService.updateGlobalData(prev => ({ ...prev, quotes: quotes as any })),
+      updateGlobalAnnouncements: (announcements) => cloudSyncService.updateGlobalData(prev => ({ ...prev, announcements })),
+      updateGlobalSettings: (settings) => cloudSyncService.updateGlobalData(prev => ({ ...prev, appSettings: settings }))
     }}>
       {children}
     </StoreContext.Provider>
