@@ -45,7 +45,7 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Drawer Overlay Backdrop (No Blur) */}
+      {/* Mobile Drawer Overlay Backdrop */}
       {isOpen && (
         <div 
           className="mobile-backdrop"
@@ -57,7 +57,7 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
             right: 0,
             bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.2)',
-            zIndex: 99999
+            zIndex: 99998
           }}
         />
       )}
@@ -76,7 +76,9 @@ export const SidebarNavigation: React.FC<SidebarProps> = ({
           justifyContent: 'space-between',
           padding: '24px 16px',
           boxSizing: 'border-box',
-          flexShrink: 0
+          flexShrink: 0,
+          zIndex: 100000,
+          pointerEvents: 'auto'
         }}
       >
       {/* Top Section: Brand & Nav Links */}

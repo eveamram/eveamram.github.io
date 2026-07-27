@@ -374,7 +374,8 @@ body {
   .sidebar-container {
     display: flex !important;
   }
-  .bottom-nav {
+  .bottom-nav,
+  .mobile-backdrop {
     display: none !important;
   }
 }
