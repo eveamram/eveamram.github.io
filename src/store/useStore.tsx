@@ -256,14 +256,62 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme, activeProfileId]);
 
-  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_tasks`, JSON.stringify(tasks)); }, [tasks, activeProfileId]);
-  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_habits`, JSON.stringify(habits)); }, [habits, activeProfileId]);
-  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_routines`, JSON.stringify(routines)); }, [routines, activeProfileId]);
-  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_reminders`, JSON.stringify(reminders)); }, [reminders, activeProfileId]);
-  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymSplits`, JSON.stringify(gymSplits)); }, [gymSplits, activeProfileId]);
-  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymCompletedDays`, JSON.stringify(gymCompletedDays)); }, [gymCompletedDays, activeProfileId]);
-  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_classes`, JSON.stringify(classes)); }, [classes, activeProfileId]);
-  useEffect(() => { localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_groceries`, JSON.stringify(groceries)); }, [groceries, activeProfileId]);
+  useEffect(() => { 
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_tasks`, JSON.stringify(tasks));
+    cloudSyncService.broadcastProfileUpdate(activeProfileId);
+  }, [tasks, activeProfileId]);
+
+  useEffect(() => { 
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_habits`, JSON.stringify(habits));
+    cloudSyncService.broadcastProfileUpdate(activeProfileId);
+  }, [habits, activeProfileId]);
+
+  useEffect(() => { 
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_routines`, JSON.stringify(routines));
+    cloudSyncService.broadcastProfileUpdate(activeProfileId);
+  }, [routines, activeProfileId]);
+
+  useEffect(() => { 
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_reminders`, JSON.stringify(reminders));
+    cloudSyncService.broadcastProfileUpdate(activeProfileId);
+  }, [reminders, activeProfileId]);
+
+  useEffect(() => { 
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymSplits`, JSON.stringify(gymSplits));
+    cloudSyncService.broadcastProfileUpdate(activeProfileId);
+  }, [gymSplits, activeProfileId]);
+
+  useEffect(() => { 
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymCompletedDays`, JSON.stringify(gymCompletedDays));
+    cloudSyncService.broadcastProfileUpdate(activeProfileId);
+  }, [gymCompletedDays, activeProfileId]);
+
+  useEffect(() => { 
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_classes`, JSON.stringify(classes));
+    cloudSyncService.broadcastProfileUpdate(activeProfileId);
+  }, [classes, activeProfileId]);
+
+  useEffect(() => { 
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_groceries`, JSON.stringify(groceries));
+    cloudSyncService.broadcastProfileUpdate(activeProfileId);
+  }, [groceries, activeProfileId]);
+
+  // Real-time synchronization across instances for the active profile
+  useEffect(() => {
+    const unsubscribe = cloudSyncService.subscribeToProfileUpdates((profileId) => {
+      if (profileId === activeProfileId) {
+        setTasks(getProfileStorage(profileId, 'tasks', INITIAL_TASKS));
+        setHabits(getProfileStorage(profileId, 'habits', INITIAL_HABITS));
+        setRoutines(getProfileStorage(profileId, 'routines', INITIAL_ROUTINES));
+        setReminders(getProfileStorage(profileId, 'reminders', INITIAL_REMINDERS));
+        setGymSplits(getProfileStorage(profileId, 'gymSplits', INITIAL_GYM_SPLITS));
+        setGymCompletedDays(getProfileStorage(profileId, 'gymCompletedDays', {}));
+        setClasses(getProfileStorage(profileId, 'classes', INITIAL_CLASSES));
+        setGroceries(getProfileStorage(profileId, 'groceries', INITIAL_GROCERIES));
+      }
+    });
+    return () => unsubscribe();
+  }, [activeProfileId]);
 
   const switchProfile = (profileId: string) => {
     const target = profiles.find(p => p.id === profileId);

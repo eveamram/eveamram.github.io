@@ -47,6 +47,8 @@ class CloudSyncService {
   private globalData: GlobalDataSchema;
   private listeners: ((data: GlobalDataSchema) => void)[] = [];
 
+  private profileListeners: ((profileId: string) => void)[] = [];
+
   constructor() {
     this.globalData = this.loadGlobalFromStorage();
 
@@ -55,9 +57,31 @@ class CloudSyncService {
         if (event.data && event.data.type === 'GLOBAL_DATA_UPDATE') {
           this.globalData = event.data.payload;
           this.notifyListeners();
+        } else if (event.data && event.data.type === 'PROFILE_DATA_UPDATE') {
+          this.notifyProfileListeners(event.data.profileId);
         }
       };
     }
+  }
+
+  public broadcastProfileUpdate(profileId: string): void {
+    if (syncChannel) {
+      syncChannel.postMessage({
+        type: 'PROFILE_DATA_UPDATE',
+        profileId
+      });
+    }
+  }
+
+  public subscribeToProfileUpdates(callback: (profileId: string) => void): () => void {
+    this.profileListeners.push(callback);
+    return () => {
+      this.profileListeners = this.profileListeners.filter(cb => cb !== callback);
+    };
+  }
+
+  private notifyProfileListeners(profileId: string): void {
+    this.profileListeners.forEach(cb => cb(profileId));
   }
 
   private loadGlobalFromStorage(): GlobalDataSchema {
