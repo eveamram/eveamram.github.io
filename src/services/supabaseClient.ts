@@ -28,10 +28,10 @@ export interface ProfileItemRow {
   updated_at?: string;
 }
 
-// Master Global Cloud Engine (guarantees cross-device sync between phones, laptops, and tablets)
+// Master Global Cloud Engine (Unlimited JSONBlob Cloud Storage for instant phone-to-computer sync)
 const PUBLIC_PROFILE_CLOUD_MAP: Record<string, string> = {
-  eve: 'ff8081819f7e10ae019fa4e355b73550',
-  alex: 'ff8081819f7e10ae019fa4e3ccab3553'
+  eve: '019fa59d-a3e8-7e19-9a1a-cec298ae89fd',
+  alex: '019fa5a0-8e01-7a88-b1ef-873a8e4e6ca3'
 };
 
 function getLocalStore(profileId: string): ProfileItemRow[] {
@@ -48,20 +48,22 @@ function saveLocalStore(profileId: string, items: ProfileItemRow[]) {
   } catch {}
 }
 
-// Global Cloud Sync: Sync items to public REST cloud backend
+// Global Cloud Storage Engine
 async function fetchFromGlobalCloud(profileId: string): Promise<ProfileItemRow[] | null> {
-  const objectId = PUBLIC_PROFILE_CLOUD_MAP[profileId];
-  if (!objectId) return null;
+  const blobId = PUBLIC_PROFILE_CLOUD_MAP[profileId];
+  if (!blobId) return null;
 
   try {
-    const res = await fetch(`https://api.restful-api.dev/objects/${objectId}`, {
+    const res = await fetch(`https://jsonblob.com/api/jsonBlob/${blobId}`, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
       cache: 'no-store'
     });
     if (!res.ok) return null;
 
     const body = await res.json();
-    if (body && body.data && Array.isArray(body.data.items)) {
-      return body.data.items as ProfileItemRow[];
+    if (body && Array.isArray(body.items)) {
+      return body.items as ProfileItemRow[];
     }
   } catch (err) {
     console.warn('[Global Cloud Fetch Exception]:', err);
@@ -70,17 +72,14 @@ async function fetchFromGlobalCloud(profileId: string): Promise<ProfileItemRow[]
 }
 
 async function saveToGlobalCloud(profileId: string, items: ProfileItemRow[]): Promise<boolean> {
-  const objectId = PUBLIC_PROFILE_CLOUD_MAP[profileId];
-  if (!objectId) return false;
+  const blobId = PUBLIC_PROFILE_CLOUD_MAP[profileId];
+  if (!blobId) return false;
 
   try {
-    const res = await fetch(`https://api.restful-api.dev/objects/${objectId}`, {
+    const res = await fetch(`https://jsonblob.com/api/jsonBlob/${blobId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: `profile_${profileId}`,
-        data: { items }
-      })
+      body: JSON.stringify({ items })
     });
     return res.ok;
   } catch (err) {
@@ -89,7 +88,7 @@ async function saveToGlobalCloud(profileId: string, items: ProfileItemRow[]): Pr
   }
 }
 
-// Fetch all profile items for active profile (Tries Supabase -> Global Cloud -> Local Store)
+// Fetch all profile items for active profile
 export async function fetchProfileItemsFromSupabase(profileId: string): Promise<ProfileItemRow[]> {
   if (isSupabaseConfigured) {
     try {
@@ -106,7 +105,7 @@ export async function fetchProfileItemsFromSupabase(profileId: string): Promise<
     } catch {}
   }
 
-  // Fetch from active global cloud database engine
+  // Fetch from global unlimited cloud storage engine
   const cloudRows = await fetchFromGlobalCloud(profileId);
   if (cloudRows !== null) {
     saveLocalStore(profileId, cloudRows);
