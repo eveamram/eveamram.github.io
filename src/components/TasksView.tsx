@@ -100,13 +100,87 @@ export const TasksView: React.FC = () => {
           To-Do List <span style={{ fontSize: '0.9rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>({activeTasks.length})</span>
         </h2>
         <button 
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => setIsAddModalOpen(prev => !prev)}
           className="btn-primary"
-          style={{ width: 'auto', padding: '8px 14px', fontSize: '0.85rem' }}
+          style={{ width: 'auto', padding: '8px 14px', fontSize: '0.85rem', gap: '4px' }}
         >
-          <Plus size={16} /> New Task
+          <Plus size={16} /> {isAddModalOpen ? 'Close' : 'New Task'}
         </button>
       </div>
+
+      {/* Inline Create Task Form */}
+      {isAddModalOpen && (
+        <form 
+          onSubmit={handleCreateTask}
+          style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '12px', 
+            padding: '16px', 
+            borderRadius: 'var(--radius-md)', 
+            background: 'var(--bg-card)', 
+            border: '1px solid var(--accent-primary)', 
+            marginBottom: '16px',
+            boxShadow: 'var(--shadow-md)'
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Task Title (e.g. Schedule oil change)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="input-text"
+            required
+            autoFocus
+          />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            <select 
+              value={category} 
+              onChange={(e) => setCategory(e.target.value as TaskCategory)}
+              className="select-input"
+            >
+              <option value="Personal">Personal</option>
+              <option value="Apartment">Apartment</option>
+              <option value="Health">Health</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Work">Work</option>
+              <option value="Travel">Travel</option>
+            </select>
+
+            <select 
+              value={priority} 
+              onChange={(e) => setPriority(e.target.value as TaskPriority)}
+              className="select-input"
+            >
+              <option value="low">Low Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="high">High Priority</option>
+            </select>
+
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="input-text"
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              placeholder="Notes / context (optional)"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="input-text"
+              style={{ flex: 1 }}
+            />
+            <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 20px', fontSize: '0.85rem' }}>
+              Add Task
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* Active Tasks List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
@@ -227,91 +301,6 @@ export const TasksView: React.FC = () => {
               ))}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Create Task Modal */}
-      {isAddModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsAddModalOpen(false)}>
-          <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-handle" />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '16px' }}>New Task</h3>
-            <form onSubmit={handleCreateTask}>
-              <div className="form-group">
-                <label className="form-label">Task Title</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Schedule oil change"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="input-text"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div className="form-group">
-                  <label className="form-label">Category</label>
-                  <select 
-                    value={category} 
-                    onChange={(e) => setCategory(e.target.value as TaskCategory)}
-                    className="select-input"
-                  >
-                    <option value="Personal">Personal</option>
-                    <option value="Apartment">Apartment</option>
-                    <option value="Health">Health</option>
-                    <option value="Shopping">Shopping</option>
-                    <option value="Work">Work</option>
-                    <option value="Travel">Travel</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Priority</label>
-                  <select 
-                    value={priority} 
-                    onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                    className="select-input"
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Due Date (Optional)</label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="input-text"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Notes (Optional)</label>
-                <textarea
-                  placeholder="Additional context or links..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="textarea-input"
-                  rows={2}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsAddModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary" style={{ flex: 1 }}>
-                  Create Task
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
     </div>

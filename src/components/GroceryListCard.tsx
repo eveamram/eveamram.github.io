@@ -202,11 +202,11 @@ export const GroceryListCard: React.FC = () => {
           )}
 
           <button
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => setIsAddModalOpen(prev => !prev)}
             className="btn-primary"
             style={{ width: 'auto', padding: '6px 12px', fontSize: '0.78rem', gap: '4px' }}
           >
-            <Plus size={14} /> Add Item
+            <Plus size={14} /> {isAddModalOpen ? 'Close' : 'Add Item'}
           </button>
         </div>
       </div>
@@ -252,6 +252,61 @@ export const GroceryListCard: React.FC = () => {
           Add
         </button>
       </form>
+
+      {/* Inline Detailed Add Form */}
+      {isAddModalOpen && (
+        <form 
+          onSubmit={handleAddSubmit} 
+          style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '12px', 
+            padding: '14px', 
+            borderRadius: 'var(--radius-md)', 
+            background: 'var(--bg-tertiary)', 
+            border: '1px solid var(--accent-teal)', 
+            marginBottom: '14px' 
+          }}
+        >
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              placeholder="Item Name (e.g. Strawberries)"
+              value={nameInput}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="input-text"
+              required
+              autoFocus
+              style={{ flex: 1 }}
+            />
+            <select
+              value={categoryInput}
+              onChange={(e) => setCategoryInput(e.target.value as GroceryCategory)}
+              className="input-text"
+              style={{ width: '130px' }}
+            >
+              {categories.filter(c => c !== 'All').map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              placeholder="Quantity / Notes (e.g. 2 lbs)"
+              value={quantityInput}
+              onChange={(e) => setQuantityInput(e.target.value)}
+              className="input-text"
+              style={{ flex: 1 }}
+            />
+
+            <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 18px', fontSize: '0.85rem' }}>
+              Add to List
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* Category Pills Bar */}
       <div className="scroll-hide" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '12px' }}>
@@ -367,90 +422,6 @@ export const GroceryListCard: React.FC = () => {
           ))
         )}
       </div>
-
-      {/* Add Grocery Drawer Panel */}
-      <DrawerPanel
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        title="Add Grocery Item"
-        subtitle="Automatic icon matching & category detection"
-      >
-        <form onSubmit={handleAddSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
-          <div className="form-group">
-            <label className="form-label">Item Name</label>
-            <input
-              type="text"
-              placeholder="e.g. Fresh Strawberries, Almond Milk..."
-              value={nameInput}
-              onChange={(e) => handleNameChange(e.target.value)}
-              className="input-text"
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className="form-group" style={{ display: 'flex', gap: '10px' }}>
-            <div style={{ flex: 1 }}>
-              <label className="form-label">Category</label>
-              <select
-                value={categoryInput}
-                onChange={(e) => setCategoryInput(e.target.value as GroceryCategory)}
-                className="input-text"
-              >
-                {categories.filter(c => c !== 'All').map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ flex: 1 }}>
-              <label className="form-label">Quantity / Notes</label>
-              <input
-                type="text"
-                placeholder="e.g. 2 lbs, 1 pack"
-                value={quantityInput}
-                onChange={(e) => setQuantityInput(e.target.value)}
-                className="input-text"
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Choose Food Emoji / Icon</label>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {iconOptions.map((opt) => (
-                <button
-                  key={opt.name}
-                  type="button"
-                  onClick={() => setSelectedIcon(opt.name)}
-                  style={{
-                    padding: '10px',
-                    borderRadius: 'var(--radius-md)',
-                    border: selectedIcon === opt.name ? '2px solid var(--accent-teal)' : '1px solid var(--border-color)',
-                    background: selectedIcon === opt.name ? 'var(--accent-teal-soft)' : 'var(--bg-tertiary)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                  title={opt.label}
-                >
-                  <span style={{ fontSize: '1.35rem' }}>{getFoodIcon(opt.label, opt.name)}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px', marginTop: 'auto', paddingTop: '20px' }}>
-            <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsAddModalOpen(false)}>
-              Cancel
-            </button>
-            <button type="submit" className="btn-primary" style={{ flex: 1 }}>
-              Add to List
-            </button>
-          </div>
-        </form>
-      </DrawerPanel>
     </div>
   );
 };

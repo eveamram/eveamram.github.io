@@ -90,13 +90,61 @@ export const HabitsView: React.FC = () => {
           Your Daily Habits
         </h3>
         <button 
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => setIsAddModalOpen(prev => !prev)}
           className="btn-primary"
-          style={{ width: 'auto', padding: '8px 14px', fontSize: '0.85rem' }}
+          style={{ width: 'auto', padding: '8px 14px', fontSize: '0.85rem', gap: '4px' }}
         >
-          <Plus size={16} /> New Habit
+          <Plus size={16} /> {isAddModalOpen ? 'Close' : 'New Habit'}
         </button>
       </div>
+
+      {/* Inline Create Habit Form */}
+      {isAddModalOpen && (
+        <form 
+          onSubmit={handleAddHabit}
+          style={{ 
+            display: 'flex', 
+            gap: '10px', 
+            padding: '14px', 
+            borderRadius: 'var(--radius-md)', 
+            background: 'var(--bg-card)', 
+            border: '1px solid var(--accent-primary)', 
+            marginBottom: '16px',
+            boxShadow: 'var(--shadow-md)'
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Habit Title (e.g. 10,000 Steps, Reading)"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            className="input-text"
+            required
+            autoFocus
+            style={{ flex: 1 }}
+          />
+
+          <select 
+            value={newIcon}
+            onChange={(e) => setNewIcon(e.target.value)}
+            className="select-input"
+            style={{ width: '170px' }}
+          >
+            <option value="Droplets">Water / Hydration</option>
+            <option value="Dumbbell">Gym / Movement</option>
+            <option value="BookOpen">Reading / Learning</option>
+            <option value="Moon">Sleep / Skincare</option>
+            <option value="Pill">Vitamins / Supplements</option>
+            <option value="HeartPulse">Meditation</option>
+            <option value="Activity">Stretching / Yoga</option>
+            <option value="Footprints">Walking / Steps</option>
+          </select>
+
+          <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 20px', fontSize: '0.85rem' }}>
+            Create Habit
+          </button>
+        </form>
+      )}
 
       {/* Habit Cards Grid */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -186,58 +234,6 @@ export const HabitsView: React.FC = () => {
           </div>
         ))}
       </div>
-
-      {/* Add Habit Modal */}
-      {isAddModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsAddModalOpen(false)}>
-          <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-handle" />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '16px' }}>Add Daily Habit</h3>
-            
-            <form onSubmit={handleAddHabit}>
-              <div className="form-group">
-                <label className="form-label">Habit Title</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 10,000 Steps, Cold Shower, Reading..."
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  className="input-text"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Icon Style</label>
-                <select 
-                  value={newIcon}
-                  onChange={(e) => setNewIcon(e.target.value)}
-                  className="select-input"
-                >
-                  <option value="Droplets">Water / Hydration</option>
-                  <option value="Dumbbell">Gym / Movement</option>
-                  <option value="BookOpen">Reading / Learning</option>
-                  <option value="Moon">Sleep / Skincare</option>
-                  <option value="Pill">Vitamins / Supplements</option>
-                  <option value="HeartPulse">Meditation / Mindfulness</option>
-                  <option value="Activity">Stretching / Yoga</option>
-                  <option value="Footprints">Walking / Steps</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsAddModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary" style={{ flex: 1 }}>
-                  Create Habit
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

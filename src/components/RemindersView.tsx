@@ -85,13 +85,79 @@ export const RemindersView: React.FC = () => {
         </div>
 
         <button 
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => setIsAddModalOpen(prev => !prev)}
           className="btn-primary"
-          style={{ width: 'auto', padding: '8px 14px', fontSize: '0.85rem' }}
+          style={{ width: 'auto', padding: '8px 14px', fontSize: '0.85rem', gap: '4px' }}
         >
-          <Plus size={16} /> New Reminder
+          <Plus size={16} /> {isAddModalOpen ? 'Close' : 'New Reminder'}
         </button>
       </div>
+
+      {/* Inline Create Reminder Form */}
+      {isAddModalOpen && (
+        <form 
+          onSubmit={handleAddReminder}
+          style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '12px', 
+            padding: '16px', 
+            borderRadius: 'var(--radius-md)', 
+            background: 'var(--bg-card)', 
+            border: '1px solid var(--accent-primary)', 
+            marginBottom: '16px',
+            boxShadow: 'var(--shadow-md)'
+          }}
+        >
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              placeholder="Reminder Title (e.g. Dentist Appointment)"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="input-text"
+              required
+              autoFocus
+              style={{ flex: 1 }}
+            />
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="input-text"
+              required
+              style={{ width: '160px' }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            <select 
+              value={category}
+              onChange={(e) => setCategory(e.target.value as any)}
+              className="select-input"
+            >
+              <option value="Bills">Bills & Rent</option>
+              <option value="Health">Health & Medical</option>
+              <option value="Documents">Documents & Licenses</option>
+              <option value="Birthdays">Birthdays</option>
+              <option value="Subscriptions">Subscriptions</option>
+              <option value="Deliveries">Deliveries</option>
+            </select>
+
+            <input
+              type="text"
+              placeholder="Amount (optional e.g. $45)"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="input-text"
+            />
+
+            <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 20px', fontSize: '0.85rem' }}>
+              Save Reminder
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* Reminders List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -162,91 +228,6 @@ export const RemindersView: React.FC = () => {
           })
         )}
       </div>
-
-      {/* Add Reminder Modal */}
-      {isAddModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsAddModalOpen(false)}>
-          <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-handle" />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '16px' }}>New Reminder</h3>
-            
-            <form onSubmit={handleAddReminder}>
-              <div className="form-group">
-                <label className="form-label">Title</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Passport Renewal, Dentist Appointment..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="input-text"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div className="form-group">
-                  <label className="form-label">Category</label>
-                  <select 
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value as any)}
-                    className="select-input"
-                  >
-                    <option value="Bills">Bills & Rent</option>
-                    <option value="Health">Health & Medical</option>
-                    <option value="Documents">Documents & Licenses</option>
-                    <option value="Birthdays">Birthdays</option>
-                    <option value="Subscriptions">Subscriptions</option>
-                    <option value="Deliveries">Deliveries</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Due Date</label>
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="input-text"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Cost / Amount (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. $1,850 or $45"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="input-text"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Notes (Optional)</label>
-                <textarea
-                  placeholder="Location or extra details..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="textarea-input"
-                  rows={2}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsAddModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary" style={{ flex: 1 }}>
-                  Create Reminder
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -81,13 +81,77 @@ export const ClassesScheduleCard: React.FC = () => {
         </div>
 
         <button 
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => setIsAddModalOpen(prev => !prev)}
           className="btn-primary"
           style={{ width: 'auto', padding: '6px 12px', fontSize: '0.78rem', gap: '4px' }}
         >
-          <Plus size={14} /> Add Class
+          <Plus size={14} /> {isAddModalOpen ? 'Close' : 'Add Class'}
         </button>
       </div>
+
+      {/* Inline Add Class Form */}
+      {isAddModalOpen && (
+        <form 
+          onSubmit={handleAddClass} 
+          style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '10px', 
+            padding: '14px', 
+            borderRadius: 'var(--radius-md)', 
+            background: 'var(--bg-tertiary)', 
+            border: '1px solid var(--accent-purple)', 
+            marginBottom: '14px' 
+          }}
+        >
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              placeholder="Course Name (e.g. Psychology 101)"
+              value={newClassName}
+              onChange={(e) => setNewClassName(e.target.value)}
+              className="input-text"
+              required
+              autoFocus
+              style={{ flex: 1 }}
+            />
+            <select 
+              value={newClassType} 
+              onChange={(e) => setNewClassType(e.target.value)}
+              className="select-input"
+              style={{ width: '120px' }}
+            >
+              <option value="Lecture">Lecture</option>
+              <option value="Lab">Lab Session</option>
+              <option value="Seminar">Seminar</option>
+              <option value="Online">Online / Zoom</option>
+              <option value="Recitation">Recitation</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input
+              type="text"
+              placeholder="Time (e.g. 10:00 AM - 11:30 AM)"
+              value={newClassTime}
+              onChange={(e) => setNewClassTime(e.target.value)}
+              className="input-text"
+              style={{ flex: 1 }}
+            />
+            <input
+              type="text"
+              placeholder="Location (e.g. Turing Hall 201)"
+              value={newClassLocation}
+              onChange={(e) => setNewClassLocation(e.target.value)}
+              className="input-text"
+              style={{ flex: 1 }}
+            />
+            <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0 16px', fontSize: '0.85rem' }}>
+              Save Class
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* Weekday Selector Pill Bar */}
       <div className="scroll-hide" style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '14px' }}>
@@ -211,120 +275,6 @@ export const ClassesScheduleCard: React.FC = () => {
           ))
         )}
       </div>
-
-      {/* Add Class Modal */}
-      {isAddModalOpen && (
-        <div 
-          onClick={() => setIsAddModalOpen(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(0, 0, 0, 0.45)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999999,
-            padding: '20px',
-            boxSizing: 'border-box'
-          }}
-        >
-          <div 
-            className="animate-pop-in"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'var(--bg-card)',
-              borderRadius: 'var(--radius-xl)',
-              padding: '24px',
-              width: '100%',
-              maxWidth: '420px',
-              boxShadow: 'var(--shadow-xl)',
-              border: '1px solid var(--border-color)',
-              maxHeight: '80vh',
-              overflowY: 'auto',
-              margin: 'auto'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Add Class for {selectedDay}
-              </h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="icon-btn" style={{ cursor: 'pointer' }}>
-                <X size={16} />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddClass}>
-              <div className="form-group">
-                <label className="form-label">Course Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Psychology 101, Calculus II..."
-                  value={newClassName}
-                  onChange={(e) => setNewClassName(e.target.value)}
-                  className="input-text"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <div className="form-group">
-                  <label className="form-label">Class Time</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 10:00 AM - 11:30 AM"
-                    value={newClassTime}
-                    onChange={(e) => setNewClassTime(e.target.value)}
-                    className="input-text"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Type</label>
-                  <select 
-                    value={newClassType} 
-                    onChange={(e) => setNewClassType(e.target.value)}
-                    className="select-input"
-                  >
-                    <option value="Lecture">Lecture</option>
-                    <option value="Lab">Lab Session</option>
-                    <option value="Seminar">Seminar</option>
-                    <option value="Online">Online / Zoom</option>
-                    <option value="Recitation">Recitation</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Location / Room</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Turing Hall 201 or Zoom Link"
-                  value={newClassLocation}
-                  onChange={(e) => setNewClassLocation(e.target.value)}
-                  className="input-text"
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsAddModalOpen(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary" style={{ flex: 1 }}>
-                  Save Class
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
