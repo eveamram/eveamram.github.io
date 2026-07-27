@@ -160,6 +160,10 @@ function getInitialActiveProfileId(): string {
 
 function getProfileStorage<T>(profileId: string, key: string, fallback: T): T {
   try {
+    const cloudBundle = cloudSyncService.loadProfileFromCloud(profileId);
+    if (cloudBundle && cloudBundle[key] !== undefined) {
+      return cloudBundle[key];
+    }
     const item = localStorage.getItem(`${STORAGE_PREFIX}${profileId}_${key}`);
     return item ? JSON.parse(item) : fallback;
   } catch {
@@ -256,7 +260,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme, activeProfileId]);
 
-  // Save composite profile data bundle to shared cloud
+  // Save composite profile data bundle to shared cloud & local storage
   useEffect(() => { 
     const profileBundle = {
       tasks,
@@ -270,7 +274,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       goals,
       updatedAt: new Date().toISOString()
     };
+    
+    // Save to cloud & local storage fallback
     cloudSyncService.saveProfileToCloud(activeProfileId, profileBundle);
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_tasks`, JSON.stringify(tasks));
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_habits`, JSON.stringify(habits));
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_routines`, JSON.stringify(routines));
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_reminders`, JSON.stringify(reminders));
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymSplits`, JSON.stringify(gymSplits));
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_gymCompletedDays`, JSON.stringify(gymCompletedDays));
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_classes`, JSON.stringify(classes));
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_groceries`, JSON.stringify(groceries));
+    localStorage.setItem(`${STORAGE_PREFIX}${activeProfileId}_goals`, JSON.stringify(goals));
   }, [tasks, habits, routines, reminders, gymSplits, gymCompletedDays, classes, groceries, goals, activeProfileId]);
 
   // Real-time synchronization across devices and instances for the active profile
