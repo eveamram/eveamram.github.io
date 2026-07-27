@@ -1,7 +1,6 @@
 import { GymSplitDay, RoutineTask, ReminderItem, QuoteItem } from '../types';
 import { INITIAL_GYM_SPLITS, INITIAL_ROUTINES, INITIAL_REMINDERS } from '../data/initialData';
 import { INITIAL_QUOTES } from '../data/quotes';
-import { supabase } from './supabaseClient';
 
 export interface GlobalDataSchema {
   workoutSplits: GymSplitDay[];
@@ -16,8 +15,6 @@ export interface GlobalDataSchema {
   };
 }
 
-const GLOBAL_STORAGE_KEY = 'aura_cloud_global_data_v4';
-
 export const INITIAL_GLOBAL_DATA: GlobalDataSchema = {
   workoutSplits: INITIAL_GYM_SPLITS,
   routineTemplates: INITIAL_ROUTINES,
@@ -26,7 +23,7 @@ export const INITIAL_GLOBAL_DATA: GlobalDataSchema = {
     {
       id: 'ann_1',
       title: 'Welcome to Aura Dashboard',
-      message: 'Supabase public.profile_items real-time cloud sync is live.',
+      message: 'Supabase real-time single source of truth database active.',
       date: new Date().toISOString().split('T')[0],
       priority: 'high'
     }
@@ -40,37 +37,11 @@ export const INITIAL_GLOBAL_DATA: GlobalDataSchema = {
 };
 
 class CloudSyncService {
-  private globalData: GlobalDataSchema;
+  private globalData: GlobalDataSchema = INITIAL_GLOBAL_DATA;
   private listeners: ((data: GlobalDataSchema) => void)[] = [];
-  private isOnline: boolean = typeof navigator !== 'undefined' ? navigator.onLine : true;
-
-  constructor() {
-    this.globalData = this.loadGlobalFromStorage();
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => {
-        this.isOnline = true;
-      });
-      window.addEventListener('offline', () => {
-        this.isOnline = false;
-      });
-    }
-  }
 
   public getIsOnline(): boolean {
-    return this.isOnline;
-  }
-
-  private loadGlobalFromStorage(): GlobalDataSchema {
-    try {
-      const raw = localStorage.getItem(GLOBAL_STORAGE_KEY);
-      if (raw) {
-        return JSON.parse(raw);
-      }
-    } catch (err) {
-      console.warn('[CloudService] Failed loading global storage:', err);
-    }
-    return INITIAL_GLOBAL_DATA;
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
   }
 
   public getGlobalData(): GlobalDataSchema {
@@ -78,15 +49,7 @@ class CloudSyncService {
   }
 
   public updateGlobalData(updater: (prev: GlobalDataSchema) => GlobalDataSchema): void {
-    const updated = updater(this.globalData);
-    this.globalData = updated;
-
-    try {
-      localStorage.setItem(GLOBAL_STORAGE_KEY, JSON.stringify(updated));
-    } catch (err) {
-      console.error('[CloudService] Error persisting global data:', err);
-    }
-
+    this.globalData = updater(this.globalData);
     this.notifyListeners();
   }
 
