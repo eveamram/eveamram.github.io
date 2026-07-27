@@ -311,12 +311,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setGymCompletedDays(prev => ({ ...prev, ...loadedGymCompleted }));
       }
       if (Object.keys(loadedGymFocus).length > 0) {
-        setGymSplits(prev => prev.map(split => {
-          if (loadedGymFocus[split.day]) {
-            return { ...split, focusTitle: loadedGymFocus[split.day] };
-          }
-          return split;
-        }));
+        setGymSplits(prev => {
+          const updated = [...prev];
+          Object.entries(loadedGymFocus).forEach(([d, title]) => {
+            const idx = updated.findIndex(s => s.day === d);
+            if (idx >= 0) {
+              updated[idx] = { ...updated[idx], focusTitle: title };
+            } else {
+              updated.push({ day: d as DayOfWeek, focusTitle: title, exercises: [] });
+            }
+          });
+          return updated;
+        });
       }
 
       // Unconditional Authoritative DB Replacement
@@ -757,12 +763,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateGymSplitFocusTitle = async (day: DayOfWeek, title: string) => {
-    setGymSplits(prev => prev.map(split => {
-      if (split.day === day) {
-        return { ...split, focusTitle: title };
+    setGymSplits(prev => {
+      const idx = prev.findIndex(s => s.day === day);
+      if (idx >= 0) {
+        return prev.map((split, i) => i === idx ? { ...split, focusTitle: title } : split);
       }
-      return split;
-    }));
+      return [...prev, { day, focusTitle: title, exercises: [] }];
+    });
 
     await insertProfileItemToSupabase({
       id: `gym_focus_${day}_${activeProfileId}`,
